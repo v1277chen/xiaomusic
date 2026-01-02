@@ -77,12 +77,16 @@ class Item(BaseModel):
     args: str
 
 
-# 在线用户
+# 在線用戶集合 (Socket.IO 連接 ID)
 onlines = set()
 
 
 @asynccontextmanager
 async def app_lifespan(app):
+    """
+    FastAPI 應用生命週期管理器
+    啟動時運行 xiaomusic 主循環 (run_forever)
+    """
     if xiaomusic is not None:
         asyncio.create_task(xiaomusic.run_forever())
     try:
@@ -97,6 +101,11 @@ security = HTTPBasic()
 def verification(
     credentials: Annotated[HTTPBasicCredentials, Depends(security)],
 ):
+    """
+    HTTP Basic 認證驗證函數
+    驗證用戶名和密碼是否匹配配置中的值
+    使用 secrets.compare_digest 防止時序攻擊
+    """
     current_username_bytes = credentials.username.encode("utf8")
     correct_username_bytes = config.httpauth_username.encode("utf8")
     is_correct_username = secrets.compare_digest(
@@ -117,23 +126,24 @@ def verification(
 
 
 def no_verification():
+    """空驗證函數 (當禁用認證時使用)"""
     return True
 
 
 app = FastAPI(
     lifespan=app_lifespan,
     version=__version__,
-    docs_url=None,
+    docs_url=None,  # 禁用默認文檔路由 (安全考慮)
     redoc_url=None,
     openapi_url=None,
 )
 
-# 创建Socket.IO实例
+# 創建 Socket.IO 實例，用於實時雙向通信
 sio = socketio.AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins="*",  # 允许所有跨域请求，生产环境应限制
+    cors_allowed_origins="*",  # 允許所有跨域請求，生產環境應限制
 )
-# 将Socket.IO挂载到FastAPI应用
+# 將 Socket.IO 掛載到 FastAPI 應用
 socketio_app = socketio.ASGIApp(
     socketio_server=sio, other_asgi_app=app, socketio_path="/socket.io"
 )
@@ -255,13 +265,16 @@ def searchmusic(name: str = "", Verifcation=Depends(verification)):
 
 @app.get("/api/search/online")
 async def search_online_music(
-    keyword: str = Query(..., description="搜索关键词"),
-    plugin: str = Query("all", description="指定插件名称，all表示搜索所有插件"),
-    page: int = Query(1, description="页码"),
-    limit: int = Query(20, description="每页数量"),
+    keyword: str = Query(..., description="搜索關鍵詞"),
+    plugin: str = Query("all", description="指定插件名稱，all表示搜索所有插件"),
+    page: int = Query(1, description="頁碼"),
+    limit: int = Query(20, description="每頁數量"),
     Verifcation=Depends(verification),
 ):
-    """在线音乐搜索API"""
+    """
+    在線音樂搜索 API
+    調用 JS 插件進行跨平台音樂搜索
+    """
     try:
         if not keyword:
             return {"success": False, "error": "Keyword required"}
@@ -275,9 +288,12 @@ async def search_online_music(
 
 @app.get("/api/proxy/real-music-url")
 async def get_real_music_url(
-    url: str = Query(..., description="音乐下载URL"), Verifcation=Depends(verification)
+    url: str = Query(..., description="音樂下載URL"), Verifcation=Depends(verification)
 ):
-    """通过服务端代理获取真实的音乐播放URL，避免CORS问题"""
+    """
+    通過服務端代理獲取真實的音樂播放 URL
+    用於解決前端直接播放時的 CORS (跨域資源共享) 問題
+    """
     try:
         # 获取真实的音乐播放URL
         return await xiaomusic.get_real_url_of_openapi(url)
@@ -290,7 +306,10 @@ async def get_real_music_url(
 
 @app.post("/api/play/getMediaSource")
 async def get_media_source(request: Request, Verifcation=Depends(verification)):
-    """获取音乐真实播放URL"""
+    """
+    獲取音樂真實播放 URL 接口
+    通過調用相應的插件獲取某一首歌曲的播放鏈接
+    """
     try:
         # 获取请求数据
         data = await request.json()
@@ -302,7 +321,10 @@ async def get_media_source(request: Request, Verifcation=Depends(verification)):
 
 @app.post("/api/play/getLyric")
 async def get_media_lyric(request: Request, Verifcation=Depends(verification)):
-    """获取音乐真实播放URL"""
+    """
+    獲取歌詞接口
+    通過調用相應的插件獲取某一首歌曲的歌詞
+    """
     try:
         # 获取请求数据
         data = await request.json()
@@ -314,7 +336,11 @@ async def get_media_lyric(request: Request, Verifcation=Depends(verification)):
 
 @app.post("/api/play/online")
 async def play_online_music(request: Request, Verifcation=Depends(verification)):
-    """设备端在线播放插件音乐"""
+    """
+    設備端在線播放插件音樂
+    獲取真實播放鏈接，並控制指定設備 (did) 進行播放
+    支持 OpenAPI 模式
+    """
     try:
         # 获取请求数据
         data = await request.json()

@@ -63,7 +63,11 @@ cc = OpenCC("t2s")  # convert from Traditional Chinese to Simplified Chinese
 
 
 ### HELP FUNCTION ###
+### HELP FUNCTION ###
 def parse_cookie_string(cookie_string):
+    """
+    解析 cookie 字符串為 cookiejar 對象，供 requests 庫使用
+    """
     cookie = SimpleCookie()
     cookie.load(cookie_string)
     cookies_dict = {k: m.value for k, m in cookie.items()}
@@ -74,6 +78,11 @@ _no_elapse_chars = re.compile(r"([「」『』《》“”'\"()（）]|(?<!-)-(?
 
 
 def calculate_tts_elapse(text: str) -> float:
+    """
+    估算 TTS (文字轉語音) 播放所需的時間
+    核心邏輯：過濾掉不發音的標點符號，按固定語速計算
+    speed = 4.5 字/秒 (經驗值)
+    """
     # for simplicity, we use a fixed speed
     speed = 4.5  # this value is picked by trial and error
     # Exclude quotes and brackets that do not affect the total elapsed time
@@ -84,6 +93,10 @@ _ending_punctuations = ("。", "？", "！", "；", ".", "?", "!", ";")
 
 
 async def split_sentences(text_stream: AsyncIterator[str]) -> AsyncIterator[str]:
+    """
+    異步流式分句處理
+    將輸入的字符流緩存並按標點符號切割成完整的句子，方便逐句進行 TTS 轉換
+    """
     cur = ""
     async for text in text_stream:
         cur += text
@@ -96,12 +109,19 @@ async def split_sentences(text_stream: AsyncIterator[str]) -> AsyncIterator[str]
 
 ### for edge-tts utils ###
 def find_key_by_partial_string(dictionary: dict[str, str], partial_key: str) -> str:
+    """
+    在字典中根據部分鍵名查找值 (模糊匹配)
+    """
     for key, value in dictionary.items():
         if key in partial_key:
             return value
 
 
 def validate_proxy(proxy_str: str) -> bool:
+    """
+    驗證 HTTP 代理字符串格式是否正確
+    必須包含 scheme (http/https) 以及 hostname 和 port
+    """
     """Do a simple validation of the http proxy string."""
 
     parsed = urlparse(proxy_str)
@@ -113,19 +133,32 @@ def validate_proxy(proxy_str: str) -> bool:
     return True
 
 
-# 模糊搜索
+# 模糊搜索入口函數
 def fuzzyfinder(user_input, collection, extra_search_index=None):
+    """
+    模糊查找
+    :param user_input: 用戶輸入的搜索詞
+    :param collection: 被搜索的集合 (通常是歌曲列表)
+    :param extra_search_index: 額外的搜索索引
+    """
     return find_best_match(
         user_input, collection, cutoff=0.1, n=10, extra_search_index=extra_search_index
     )
 
 
 def traditional_to_simple(to_convert: str):
+    """將繁體中文轉換為簡體中文"""
     return cc.convert(to_convert)
 
 
-# 关键词检测
+# 關鍵詞檢測與排序
 def keyword_detection(user_input, str_list, n):
+    """
+    從字符串列表中篩選包含關鍵詞的項目，並按匹配度排序
+    :param user_input: 關鍵詞
+    :param str_list: 候選列表
+    :param n: 返回數量限制
+    """
     # 过滤包含关键字的字符串
     matched, remains = [], []
     for item in str_list:
@@ -150,6 +183,9 @@ def keyword_detection(user_input, str_list, n):
 
 
 def real_search(prompt, candidates, cutoff, n):
+    """
+    執行搜索邏輯：先嘗試精確包含匹配，若不足則嘗試模糊匹配 (difflib)
+    """
     matches, remains = keyword_detection(prompt, candidates, n=n)
     if len(matches) < n:
         # 如果没有准确关键词匹配，开始模糊匹配
@@ -158,6 +194,12 @@ def real_search(prompt, candidates, cutoff, n):
 
 
 def find_best_match(user_input, collection, cutoff=0.6, n=1, extra_search_index=None):
+    """
+    查找最佳匹配項 (支持繁簡轉換)
+    1. 將用戶輸入和集合都轉為簡體小寫
+    2. 先在主集合搜索
+    3. 若結果不足 n 個，且提供了 extra_search_index，則繼續搜索
+    """
     lower_collection = {
         traditional_to_simple(item.lower()): item for item in collection
     }
@@ -179,7 +221,13 @@ def find_best_match(user_input, collection, cutoff=0.6, n=1, extra_search_index=
 
 
 # 歌曲排序
+# 歌曲排序函數
 def custom_sort_key(s):
+    """
+    自定義排序邏輯
+    優先識別字符串中的數字部分進行數值排序，而不是純字典序
+    例如： "10.mp3" 應該排在 "2.mp3" 後面
+    """
     # 使用正则表达式分别提取字符串的数字前缀和数字后缀
     prefix_match = re.match(r"^(\d+)", s)
     suffix_match = re.search(r"(\d+)$", s)
@@ -199,6 +247,10 @@ def custom_sort_key(s):
 
 
 def _get_depth_path(root, directory, depth):
+    """
+    根據設定的掃描深度，截取目錄路徑
+    防止掃描過深的目錄結構
+    """
     # 计算当前目录的深度
     relative_path = root[len(directory) :].strip(os.sep)
     path_parts = relative_path.split(os.sep)
@@ -209,6 +261,14 @@ def _get_depth_path(root, directory, depth):
 
 
 def _append_files_result(result, root, joinpath, files, support_extension):
+    """
+    將掃描到的合法音樂文件添加到結果字典中
+    :param result: 存儲結果的字典
+    :param root: 作為 key 的目錄名
+    :param joinpath: 文件拼接的根路徑
+    :param files: 文件列表
+    :param support_extension: 支持的文件後綴列表
+    """
     dir_name = os.path.basename(root)
     if dir_name not in result:
         result[dir_name] = []
@@ -225,6 +285,14 @@ def _append_files_result(result, root, joinpath, files, support_extension):
 
 
 def traverse_music_directory(directory, depth, exclude_dirs, support_extension):
+    """
+    遍歷音樂目錄
+    :param directory: 根目錄路徑
+    :param depth: 掃描最大深度
+    :param exclude_dirs: 忽略的目錄列表
+    :param support_extension: 支持的音樂格式後綴
+    :return: {目錄名: [文件路徑1, 文件路徑2...]}
+    """
     result = {}
     for root, dirs, files in os.walk(directory, followlinks=True):
         # 忽略排除的目录
@@ -240,10 +308,14 @@ def traverse_music_directory(directory, depth, exclude_dirs, support_extension):
     return result
 
 
-# 发送给网页3thplay，用于三者设备播放
+# 發送給網頁 3thplay，用於三者設備播放
 async def thdplay(
     action, args="/static/3thdplay.mp3", target="HTTP://192.168.1.10:58090/thdaction"
 ):
+    """
+    調用第三方播放接口
+    通常用於多設備聯動或將音頻投放給其他支持該協議的設備
+    """
     # 接口地址 target,在参数文件指定
     data = {"action": action, "args": args}
     try:
@@ -262,6 +334,11 @@ async def thdplay(
 
 
 async def downloadfile(url):
+    """
+    簡單的異步文件下載
+    :param url: 文件地址
+    :return: 文件內容 (text)
+    """
     # 清理和验证URL
     # 解析URL
     parsed_url = urlparse(url)
@@ -286,6 +363,7 @@ async def downloadfile(url):
 
 
 def is_mp3(url):
+    """判斷 URL 是否指向 MP3 文件"""
     mt = mimetypes.guess_type(url)
     if mt and mt[0] == "audio/mpeg":
         return True
@@ -293,22 +371,24 @@ def is_mp3(url):
 
 
 def is_m4a(url):
+    """判斷 URL 是否指向 M4A 文件"""
     return url.endswith(".m4a")
 
 
 async def _get_web_music_duration(session, url, config, start=0, end=500):
     """
-    异步获取网络音乐文件的部分内容并估算其时长。
+    異步獲取網絡音樂文件的部分內容並估算其時長。
 
-    通过请求 URL 的前几个字节（默认 0-500）下载部分文件，
-    写入临时文件后调用本地工具（如 ffprobe）获取音频时长。
+    通過請求 URL 的前幾個字節（默認 0-500）下載部分文件頭，
+    寫入臨時文件後調用本地工具（如 ffprobe）解析元數據獲取音頻時長。
+    這樣可以避免下載完整的大文件。
 
-    :param session: aiohttp.ClientSession 实例
-    :param url: 音乐文件的 URL 地址
-    :param config: 包含配置信息的对象（如 ffmpeg 路径）
-    :param start: 请求的起始字节位置
-    :param end: 请求的结束字节位置
-    :return: 返回音频的持续时间（秒），如果失败则返回 0
+    :param session: aiohttp.ClientSession 實例
+    :param url: 音樂文件的 URL 地址
+    :param config: 包含配置信息的對象（如 ffmpeg 路徑）
+    :param start: 請求的起始字節位置
+    :param end: 請求的結束字節位置
+    :return: 返回音頻的持續時間（秒），如果失敗則返回 0
     """
     duration = 0
     # 设置请求头 Range，只请求部分内容（用于快速获取元数据）
@@ -336,6 +416,11 @@ async def _get_web_music_duration(session, url, config, start=0, end=500):
 
 
 async def get_web_music_duration(url, config):
+    """
+    獲取網絡音頻文件的時長
+    會處理重定向，並嘗試通過部分下載的方式快速獲取信息
+    如果第一次嘗試失敗（下載前500字節），會嘗試下載更多數據（前3000字節）
+    """
     duration = 0
     try:
         parsed_url = urlparse(url)
@@ -369,6 +454,10 @@ async def get_web_music_duration(url, config):
 
 # 获取文件播放时长
 async def get_local_music_duration(filename, config):
+    """
+    獲取本地音樂文件時長
+    支持通過 ffprobe (ffmpeg組件) 或 mutagen (Python庫) 兩種方式獲取
+    """
     duration = 0
     if config.get_duration_type == "ffprobe":
         duration = get_duration_by_ffprobe(filename, config.ffmpeg_location)
@@ -386,6 +475,7 @@ async def get_local_music_duration(filename, config):
 
 
 async def get_duration_by_mutagen(file_path):
+    """使用 mutagen 庫解析文件頭部獲取時長"""
     duration = 0
     try:
         loop = asyncio.get_event_loop()
@@ -400,6 +490,7 @@ async def get_duration_by_mutagen(file_path):
 
 
 def get_duration_by_ffprobe(file_path, ffmpeg_location):
+    """使用系統安裝的 ffprobe 命令行工具獲取時長"""
     duration = 0
     try:
         # 构造 ffprobe 命令参数
@@ -416,7 +507,7 @@ def get_duration_by_ffprobe(file_path, ffmpeg_location):
 
         # 输出待执行的完整命令
         full_command = " ".join(cmd_args)
-        log.info(f"待执行的完整命令 ffprobe command: {full_command}")
+        log.info(f"待執行及其完整命令 ffprobe command: {full_command}")
 
         # 使用 ffprobe 获取文件的元数据，并以 JSON 格式输出
         result = subprocess.run(
@@ -428,7 +519,7 @@ def get_duration_by_ffprobe(file_path, ffmpeg_location):
 
         # 输出命令执行结果
         log.info(
-            f"命令执行结果 command result - return code: {result.returncode}, stdout: {result.stdout}"
+            f"命令執行結果 command result - return code: {result.returncode}, stdout: {result.stdout}"
         )
 
         # 解析 JSON 输出
@@ -446,11 +537,16 @@ def get_duration_by_ffprobe(file_path, ffmpeg_location):
 
 
 def get_random(length):
+    """生成指定長度的隨機字母數字字符串"""
     return "".join(random.sample(string.ascii_letters + string.digits, length))
 
 
 # 深拷贝把敏感数据设置为*
 def deepcopy_data_no_sensitive_info(data, fields_to_anonymize=None):
+    """
+    深拷貝數據並對敏感字段進行脫敏處理 (例如密碼顯示為 ******)
+    用於日誌記錄或數據導出
+    """
     if fields_to_anonymize is None:
         fields_to_anonymize = [
             "account",
@@ -478,6 +574,10 @@ def deepcopy_data_no_sensitive_info(data, fields_to_anonymize=None):
 
 # k1:v1,k2:v2
 def parse_str_to_dict(s, d1=",", d2=":"):
+    """
+    解析鍵值對字符串為字典
+    例如: "k1:v1,k2:v2" -> {"k1": "v1", "k2": "v2"}
+    """
     # 初始化一个空字典
     result = {}
     parts = s.split(d1)
@@ -499,6 +599,11 @@ def no_padding(info):
 
 
 def remove_id3_tags(input_file: str, config) -> str:
+    """
+    移除 MP3 文件的 ID3 標籤
+    某些小愛音箱在播放帶有特定 ID3 標籤的 MP3 時會有異常延遲，移除標籤可解決此問題
+    處理後的文件會保存在臨時目錄
+    """
     audio = MP3(input_file, ID3=ID3)
 
     # 检查是否存在ID3 v2.3或v2.4标签
@@ -541,6 +646,10 @@ def remove_id3_tags(input_file: str, config) -> str:
 
 
 def convert_file_to_mp3(input_file: str, config) -> str:
+    """
+    調用 ffmpeg 將音頻文件轉換為 MP3 格式
+    同時支持音量均衡 (Loudnorm)
+    """
     music_path = config.music_path
     temp_dir = config.temp_dir
 
@@ -612,6 +721,10 @@ chinese_to_arabic = {
 
 
 def chinese_to_number(chinese):
+    """
+    將中文數字字符串轉換為阿拉伯數字
+    例如： "一千二百三十四" -> 1234
+    """
     result = 0
     unit = 1
     num = 0
@@ -638,6 +751,10 @@ def chinese_to_number(chinese):
 
 
 def list2str(li, verbose=False):
+    """
+    將列表轉換為字符串顯示
+    如果 verbose 為 False 且列表過長，則只顯示首尾部分，避免日誌刷屏
+    """
     if len(li) > 5 and not verbose:
         return f"{li[:2]} ... {li[-2:]} with len: {len(li)}"
     else:
@@ -645,6 +762,9 @@ def list2str(li, verbose=False):
 
 
 async def get_latest_version(package_name: str) -> str:
+    """
+    從 PyPI 檢查指定包的最新版本號
+    """
     url = f"https://pypi.org/pypi/{package_name}/json"
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -657,13 +777,16 @@ async def get_latest_version(package_name: str) -> str:
 
 @dataclass
 class Metadata:
-    title: str = ""
-    artist: str = ""
-    album: str = ""
-    year: str = ""
-    genre: str = ""
-    picture: str = ""
-    lyrics: str = ""
+    """
+    音樂元數據數據類
+    """
+    title: str = ""   # 標題
+    artist: str = ""  # 藝術家
+    album: str = ""   # 專輯
+    year: str = ""    # 年份
+    genre: str = ""   # 流派
+    picture: str = "" # 封面圖片路徑
+    lyrics: str = ""  # 歌詞
 
     def __init__(self, info=None):
         if info:
@@ -677,6 +800,7 @@ class Metadata:
 
 
 def _get_alltag_value(tags, k):
+    """獲取 mutagen 對象中所有標籤的值，並處理編碼"""
     v = tags.getall(k)
     if len(v) > 0:
         return _to_utf8(v[0])
@@ -684,6 +808,7 @@ def _get_alltag_value(tags, k):
 
 
 def _get_tag_value(tags, k):
+    """獲取 mutagen 對象中指定標籤的值，并處理編碼"""
     if k not in tags:
         return ""
     v = tags[k]
@@ -691,12 +816,19 @@ def _get_tag_value(tags, k):
 
 
 def _to_utf8(v):
+    """
+    嘗試將各種編碼的字符串轉換為 UTF-8
+    特別處理 Latin1 (ISO-8859-1) 被錯誤識別為 GBK 的情況（常見於中文 MP3 ID3v1 標籤）
+    """
     if isinstance(v, TextFrame) and not isinstance(v, TimeStampTextFrame):
         old_ts = "".join(v.text)
         if v.encoding == Encoding.LATIN1:
-            bs = old_ts.encode("latin1")
-            ts = bs.decode("GBK", errors="ignore")
-            return ts
+            try:
+                bs = old_ts.encode("latin1")
+                ts = bs.decode("GBK", errors="ignore")
+                return ts
+            except Exception:
+                return old_ts
         return old_ts
     elif isinstance(v, list):
         return "".join(str(item) for item in v)
@@ -704,6 +836,12 @@ def _to_utf8(v):
 
 
 def save_picture_by_base64(picture_base64_data, save_root, file_path):
+    """
+    保存 Base64 編碼的圖片數據到文件
+    :param picture_base64_data: Base64 字符串
+    :param save_root: 保存根目錄
+    :param file_path: 原始音樂文件路徑（用於生成 Hash 以命名圖片目錄）
+    """
     try:
         picture_data = base64.b64decode(picture_base64_data)
     except (TypeError, ValueError) as e:
@@ -713,6 +851,11 @@ def save_picture_by_base64(picture_base64_data, save_root, file_path):
 
 
 def _save_picture(picture_data, save_root, file_path):
+    """
+    保存二進制圖片數據
+    會根據 file_path 的哈希值創建子目錄，避免單個目錄文件過多
+    並調用 _resize_save_image 進行縮放保存
+    """
     # 计算文件名的哈希值
     file_hash = hashlib.md5(file_path.encode("utf-8")).hexdigest()
     # 创建目录结构
@@ -732,6 +875,10 @@ def _save_picture(picture_data, save_root, file_path):
 
 
 def _resize_save_image(image_bytes, save_path, max_size=300):
+    """
+    縮放並保存圖片
+    將圖片限制在 max_size * max_size 範圍內，轉為 JPEG 格式以節省空間
+    """
     # 将 bytes 转换为 PIL Image 对象
     image = None
     try:
@@ -762,6 +909,10 @@ def _resize_save_image(image_bytes, save_path, max_size=300):
 
 
 def extract_audio_metadata(file_path, save_root):
+    """
+    提取音頻文件的元數據 (標題, 藝術家, 封面圖等)
+    支持 MP3, FLAC, MP4, OggVorbis, ASF, WavPack, WAVE 格式
+    """
     metadata = Metadata()
 
     audio = None
@@ -777,6 +928,7 @@ def extract_audio_metadata(file_path, save_root):
         return asdict(metadata)
 
     if isinstance(audio, MP3):
+        # 讀取 MP3 ID3 標籤
         metadata.title = _get_tag_value(tags, "TIT2")
         metadata.artist = _get_tag_value(tags, "TPE1")
         metadata.album = _get_tag_value(tags, "TALB")
@@ -789,6 +941,7 @@ def extract_audio_metadata(file_path, save_root):
                 break
 
     elif isinstance(audio, FLAC):
+        # 讀取 FLAC 標籤
         metadata.title = _get_tag_value(tags, "TITLE")
         metadata.artist = _get_tag_value(tags, "ARTIST")
         metadata.album = _get_tag_value(tags, "ALBUM")

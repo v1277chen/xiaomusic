@@ -11,6 +11,11 @@ from xiaomusic import __version__
 
 
 class Analytics:
+    """
+    統計分析模組
+    負責發送匿名使用數據 (如版本號、日活、播放次數) 到 Google Analytics (GA4)
+    用戶可通過配置關閉此功能
+    """
     def __init__(self, log, config):
         self.gtag = None
         self.current_date = None
@@ -19,6 +24,7 @@ class Analytics:
         self.init()
 
     def init(self):
+        """初始化 GA4 客戶端"""
         if self.gtag is not None:
             return
 
@@ -33,11 +39,16 @@ class Analytics:
         self.log.info("analytics init ok")
 
     async def send_startup_event(self):
+        """發送啟動事件"""
         event = self.gtag.create_new_event(name="startup")
         event.set_event_param(name="version", value=__version__)
         await self._send(event)
 
     async def send_daily_event(self):
+        """
+        發送每日活躍用戶 (DAU) 事件
+        每天只發送一次
+        """
         current_date = datetime.now().strftime("%Y-%m-%d")
         if self.current_date == current_date:
             return
@@ -49,6 +60,7 @@ class Analytics:
         self.current_date = current_date
 
     async def send_play_event(self, name, sec, hardware):
+        """發送播放事件"""
         event = self.gtag.create_new_event(name="play")
         event.set_event_param(name="version", value=__version__)
         event.set_event_param(name="music", value=name)
@@ -57,6 +69,7 @@ class Analytics:
         await self._send(event)
 
     async def _send(self, event):
+        """內部發送方法，檢查配置是否開啟"""
         if self.config.enable_analytics:
             # asyncio.create_task(self.post_to_umami(event))
             await self.run_with_cancel(self._google_send, [event])
@@ -64,6 +77,7 @@ class Analytics:
             self.log.info("analytics is disabled, skip sending event")
 
     def _google_send(self, events):
+        """實際調用 GA4 SDK 發送數據"""
         try:
             self.gtag.send(events)
         except Exception as e:

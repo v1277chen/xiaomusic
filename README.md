@@ -347,3 +347,25 @@ docker build -t xiaomusic .
 ## License
 
 [MIT](https://github.com/hanxi/xiaomusic/blob/main/LICENSE) License © 2024 涵曦
+
+## 文檔部署 (Documentation Deployment)
+
+本專案包含自動部署文檔到 GitHub Pages 的 GitHub Actions Workflow。
+
+### 啟用步驟
+1.  Fork 本專案到你的 GitHub 帳號。
+2.  進入倉庫的 **Settings** -> **Pages**。
+3.  在 **Build and deployment** 下的 **Source** 選擇 **Deploy from a branch**。
+4.  **Branch** 選擇 `gh-pages`，文件夾選擇 `/ (root)`。
+    *   注意：`gh-pages` 分支會在第一次 Action 運行成功後自動創建。如果還沒看到該分支，請先進行第 5 步觸發一次構建。
+5.  確保 **Settings** -> **Actions** -> **General** 中的 **Workflow permissions** 設置為 **Read and write permissions**。
+6.  修改 `docs/` 目錄下的任意文件並推送到 `master` 或 `main` 分支，即可觸發自動部署。
+
+### 本地預覽文檔
+如果你想在本地預覽文檔：
+```bash
+cd docs
+npm install
+npm run docs:dev
+```
+服務將啟動在 `http://localhost:3030`。

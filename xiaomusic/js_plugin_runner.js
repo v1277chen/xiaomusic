@@ -20,6 +20,11 @@ class PluginRunner {
         this.setupMessageHandler();
     }
 
+    /**
+     * 設置消息處理器
+     * 監聽 stdin 數據流，解析 JSON 消息並調用 handleMessage 處理
+     * 處理了數據分包和黏包的情況
+     */
     setupMessageHandler() {
         let buffer = '';
         process.stdin.on('data', (data) => {
@@ -47,13 +52,14 @@ class PluginRunner {
         });
     }
 
+    /**
+     * 處理來自 Python 主進程的消息
+     * @param {Object} message - 消息對象 {id, action, ...}
+     */
     async handleMessage(message) {
         const { id, action } = message;
         // 只在必要时输出日志以避免干扰通信
         // console.debug(`[JS_PLUGIN_RUNNER] Received message: ${action} with id: ${id}`);
-        // if (message.pluginName) console.debug(`[JS_PLUGIN_RUNNER] Plugin: ${message.pluginName}`);
-        // if (message.params) console.debug(`[JS_PLUGIN_RUNNER] Params:`, message.params);
-        // if (message.musicItem) console.debug(`[JS_PLUGIN_RUNNER] Music Item:`, message.musicItem);
 
         try {
             let result;
@@ -63,12 +69,15 @@ class PluginRunner {
                     result = this.loadPlugin(message.name, message.code);
                     break;
                 case 'search':
+                    // 調用插件的搜索功能
                     result = await this.search(message.pluginName, message.params);
                     break;
                 case 'getMediaSource':
+                    // 獲取音樂播放地址
                     result = await this.getMediaSource(message.pluginName, message.musicItem, message.quality);
                     break;
                 case 'getLyric':
+                    // 獲取歌詞
                     result = await this.getLyric(message.pluginName, message.musicItem);
                     break;
                 case 'getMusicInfo':
@@ -115,6 +124,10 @@ class PluginRunner {
         process.stdout.write(JSON.stringify(response) + '\n');
     }
 
+    /**
+     * 加載並編譯 JS 插件代碼
+     * 使用 vm 模組創建沙箱環境，模擬 MusicFree 的運行環境
+     */
     loadPlugin(name, code) {
         try {
             // 创建安全的沙箱环境
@@ -124,6 +137,7 @@ class PluginRunner {
             const context = vm.createContext(sandbox);
 
             // 包装代码以支持 ES6 模块语法
+            // 自動處理 module.exports 和 export default
             const wrappedCode = `
                 (function() {
                     ${code}
@@ -170,10 +184,10 @@ class PluginRunner {
 
     createSandbox() {
         const safeConsole = {
-            log: (...args) => {},  // 禁用插件的 console.log 避免干扰主进程通信
+            log: (...args) => { },  // 禁用插件的 console.log 避免干扰主进程通信
             warn: (...args) => console.warn(`[PLUGIN]`, ...args),  // 保留警告，但添加标识
             error: (...args) => console.error(`[PLUGIN]`, ...args), // 保留错误，但添加标识
-            debug: (...args) => {}  // 禁用调试输出
+            debug: (...args) => { }  // 禁用调试输出
         };
 
         const safeFetch = async (url, options = {}) => {
@@ -336,7 +350,7 @@ class PluginRunner {
         }
 
         try {
-            const result = await plugin.getMediaSource(musicItem,quality);
+            const result = await plugin.getMediaSource(musicItem, quality);
             // 参考 MusicFreeDesktop 实现，验证结果
             if (result === null || result === undefined) {
                 return null;

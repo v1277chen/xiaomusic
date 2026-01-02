@@ -15,7 +15,12 @@ from typing import Any
 
 
 class JSPluginManager:
-    """JS 插件管理器"""
+    """
+    JS 插件管理器
+    負責加載、管理和運行 MusicFree JS 插件
+    通過啟動一個 Node.js 子進程 (js_plugin_runner.js) 在沙箱環境中執行 JS 代碼
+    並通過標準輸入輸出 (Stdin/Stdout) 進行 JSON 消息通訊
+    """
 
     def __init__(self, xiaomusic):
         self.xiaomusic = xiaomusic
@@ -25,7 +30,7 @@ class JSPluginManager:
         self.plugins_dir = os.path.join(base_path, "js_plugins")
         # 插件配置Json：
         self.plugins_config_path = os.path.join(base_path, "plugins-config.json")
-        self.plugins = {}  # 插件状态信息
+        self.plugins = {}  # 插件狀態信息緩存
         self.node_process = None
         self.message_queue = []
         self.response_handlers = {}
@@ -43,7 +48,11 @@ class JSPluginManager:
         self._load_plugins()
 
     def _start_node_process(self):
-        """启动 Node.js 子进程"""
+        """
+        啟動 Node.js 子進程
+        使用 subprocess.Popen 啟動 js_plugin_runner.js
+        並設置標準輸入輸出管道
+        """
         runner_path = os.path.join(os.path.dirname(__file__), "js_plugin_runner.js")
 
         try:
@@ -68,7 +77,7 @@ class JSPluginManager:
             raise
 
     def _monitor_node_process(self):
-        """监控 Node.js 进程状态"""
+        """監控 Node.js 進程狀態，若意外退出則自動重啟"""
         while True:
             if self.node_process and self.node_process.poll() is not None:
                 self.log.warning("Node.js process died, restarting...")
@@ -76,7 +85,10 @@ class JSPluginManager:
             time.sleep(5)
 
     def _start_message_handler(self):
-        """启动消息处理线程"""
+        """
+        啟動消息處理執行緒
+        分別監聽子進程的 Stdout (正常響應) 和 Stderr (錯誤日誌)
+        """
 
         def stdout_handler():
             while True:
@@ -84,6 +96,7 @@ class JSPluginManager:
                     try:
                         line = self.node_process.stdout.readline()
                         if line:
+                            # 解析子進程發來的 JSON 響應
                             response = json.loads(line.strip())
                             self._handle_response(response)
                     except json.JSONDecodeError as e:
@@ -115,11 +128,16 @@ class JSPluginManager:
     def _send_message(
         self, message: dict[str, Any], timeout: int = 30
     ) -> dict[str, Any]:
-        """发送消息到 Node.js 子进程"""
+        """
+        發送消息到 Node.js 子進程
+        :param message: 消息字典，包含 action 和數據
+        :return: 子進程的響應結果
+        """
         with self._lock:
             if not self.node_process or self.node_process.poll() is not None:
                 raise Exception("Node.js process not available")
 
+            # 生成唯一消息 ID
             message_id = f"msg_{int(time.time() * 1000)}"
             message["id"] = message_id
 
@@ -127,12 +145,13 @@ class JSPluginManager:
             self.log.info(
                 f"JS Plugin Manager sending message: {message.get('action', 'unknown')} for plugin: {message.get('pluginName', 'unknown')}"
             )
+            # 簡化日誌輸出
             if "params" in message:
                 self.log.info(f"JS Plugin Manager search params: {message['params']}")
             elif "musicItem" in message:
                 self.log.info(f"JS Plugin Manager music item: {message['musicItem']}")
 
-            # 发送消息
+            # 发送消息 (JSON字符串 + 换行符)
             self.node_process.stdin.write(json.dumps(message) + "\n")
             self.node_process.stdin.flush()
 
@@ -431,13 +450,20 @@ class JSPluginManager:
             return []
 
     def search(self, plugin_name: str, keyword: str, page: int = 1, limit: int = 20):
-        """搜索音乐"""
+        """
+        執行音樂搜索
+        :param plugin_name: 插件名稱 OR "OpenAPI"
+        :param keyword: 搜索關鍵詞
+        :param page: 頁碼
+        :param limit: 每頁數量
+        """
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
         self.log.info(
             f"JS Plugin Manager starting search in plugin {plugin_name} for keyword: {keyword}"
         )
+        # 發送 'search' 指令給 Node.js 進程
         response = self._send_message(
             {
                 "action": "search",
@@ -480,14 +506,12 @@ class JSPluginManager:
         return result_data
 
     async def openapi_search(self, url: str, keyword: str, limit: int = 10):
-        """直接调用在线接口进行音乐搜索
-
-        Args:
-            url (str): 在线搜索接口地址
-            keyword (str): 搜索关键词，支持： 歌曲名-歌手名 搜索
-            limit (int): 每页数量，默认为5
-        Returns:
-            Dict[str, Any]: 搜索结果，数据结构与search函数一致
+        """
+        直接調用在線接口進行音樂搜索 (OpenAPI)
+        用於聚合多源搜索
+        :param url: 在線搜索接口地址
+        :param keyword: 搜索關鍵詞 (支持 "歌曲-歌手" 格式)
+        :param limit: 每頁數量
         """
         import asyncio
 
@@ -590,14 +614,13 @@ class JSPluginManager:
         limit: int = 1,  # 返回结果数量限制，默认为1
     ) -> dict[str, Any]:  # 返回优化后的搜索结果，字典类型，包含任意类型的值
         """
-        优化搜索结果，根据关键词、歌手名和平台权重对结果进行排序
-        参数:
-            result_data: 原始搜索结果数据
-            search_keyword: 搜索的关键词
-            search_artist: 搜索的歌手名
-            limit: 返回结果的最大数量
-        返回:
-            优化后的搜索结果数据，已根据匹配度和平台权重排序
+        優化搜索結果
+        根據關鍵詞、歌手名和平台權重對結果進行重新排序
+        :param result_data: 原始搜索結果
+        :param search_keyword: 關鍵詞
+        :param search_artist: 歌手名
+        :param limit: 返回限制
+        :return: 排序後的數據
         """
         if not result_data or "data" not in result_data or not result_data["data"]:
             return result_data

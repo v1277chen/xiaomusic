@@ -10,7 +10,11 @@ loaded_years = {}
 
 
 def load_year_data(year):
-    """加载指定年份的节假日数据"""
+    """
+    加載指定年份的節假日數據
+    數據來源：holiday/{year}.json
+    :return: True if successful, False otherwise
+    """
     global loaded_years
 
     if year in loaded_years:
@@ -37,7 +41,7 @@ def load_year_data(year):
 
 
 def is_valid_date(year, month, day):
-    """检查日期是否有效"""
+    """檢查日期是否有效 (例如不存在 2月30日)"""
     try:
         date(year, month, day)
         return True
@@ -46,13 +50,18 @@ def is_valid_date(year, month, day):
 
 
 def is_weekend(year, month, day):
-    """判断是否为周末"""
+    """判斷是否為周末 (週六或週日)"""
     weekday = date(year, month, day).isoweekday()
     return weekday >= 6  # 周六或周日
 
 
 def is_off_day(year, month, day):
-    """判断是否为休息日（包括法定节假日和周末）"""
+    """
+    判斷是否為休息日
+    綜合考慮法定節假日配置 (loaded_years) 和自然週末
+    優先級：法定配置 > 自然週末
+    (例如某個週日因調休變為工作日，則配置文件中 isOffDay 為 False)
+    """
     # 检查日期有效性
     if not is_valid_date(year, month, day):
         log.warn(f"无效日期: {year}-{month:02d}-{day:02d}")
@@ -74,6 +83,6 @@ def is_off_day(year, month, day):
 
 
 def is_working_day(year, month, day):
-    """判断是否为工作日（非休息日）"""
+    """判斷是否為工作日（非休息日）"""
     off_day = is_off_day(year, month, day)
     return False if off_day is None else not off_day

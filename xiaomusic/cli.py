@@ -137,49 +137,45 @@ def main():
                 "handlers": [
                     "default",
                     "file",
-                ],
-                "level": "INFO",
-            },
-            "uvicorn.error": {
-                "level": "INFO",
-            },
-            "uvicorn.access": {
-                "handlers": [
-                    "access",
-                    "file",
-                ],
-                "level": "INFO",
-                "propagate": False,
-            },
-        },
-    }
+    # 设置默认音乐目录和配置目录
+    music_path = os.environ.get("XIAOMUSIC_MUSIC_PATH", "music")
+    conf_path = os.environ.get("XIAOMUSIC_CONF_PATH", ".")
+    
+    # 初始化配置对象
+    config_obj = Config()
+    config_obj.port = port
+    config_obj.config_file = config
+    config_obj.public_port = public_port
+    config_obj.verbose = verbose
+    config_obj.music_path = music_path
+    config_obj.conf_path = conf_path
 
+    # 从文件加载配置，如果文件存在且有效
     try:
-        filename = config.getsettingfile()
-        with open(filename, encoding="utf-8") as f:
-            data = json.loads(f.read())
-            config.update_config(data)
+        config_obj.read_from_file(config_file=config)
     except Exception as e:
-        print(f"Execption {e}")
+        print(f"Error loading config from file {config}: {e}")
+        # Continue with default/CLI provided config if file loading fails
 
-    def run_server(port):
-        xiaomusic = XiaoMusic(config)
+    # 创建并运行 XiaoMusic 实例
+    xiaomusic = XiaoMusic(config_obj)
+    
+    # 启动 HTTP 服务
+    try:
         HttpInit(xiaomusic)
         uvicorn.run(
-            HttpApp,
-            host=["0.0.0.0", "::"],
+            app=app,
+            host="0.0.0.0",
             port=port,
-            log_config=LOGGING_CONFIG,
+            log_level="info" if not verbose else "debug",
         )
-
-    def signal_handler(sig, frame):
-        print("主进程收到退出信号，准备退出...")
+    except Exception as e:
+        print(f"Failed to start xiaomusic: {e}")
         os._exit(0)  # 退出主进程
 
     # 捕获主进程的退出信号
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    port = int(config.port)
     run_server(port)
 
 

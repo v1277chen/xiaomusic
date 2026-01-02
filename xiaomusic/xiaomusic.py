@@ -74,43 +74,54 @@ from xiaomusic.utils import (
 
 
 class XiaoMusic:
+    """
+    XiaoMusic 核心類
+    負責協調和管理整個應用程序的運行，包括：
+    1. 配置加載與管理 (config)
+    2. 設備發現與通信 (MiService, MiIOService)
+    3. 音樂播放控制 (本地播放、網絡播放)
+    4. 插件系統管理 (PluginManager, JSPluginManager)
+    5. 計畫任務調度 (Crontab)
+    6. 數據統計 (Analytics)
+    """
+
     def __init__(self, config: Config):
         self.config = config
 
         self.mi_token_home = os.path.join(self.config.conf_path, ".mi.token")
         self.session = None
-        self.last_timestamp = {}  # key为 did. timestamp last call mi speaker
+        self.last_timestamp = {}  # key为 did. 记录每个设备最后一次询问的时间戳 (用于轮询)
         self.last_record = None
-        self.last_cmd = ""  # <--- 【新增这行】初始化变量
+        self.last_cmd = ""
         self.cookie_jar = None
-        self.mina_service = None
-        self.miio_service = None
+        self.mina_service = None  # 小米 AI 服務接口 (用於獲取對話記錄)
+        self.miio_service = None  # 小米 IoT 服務接口 (用於設備控制)
         self.login_acount = None
         self.login_password = None
-        self.polling_event = asyncio.Event()
-        self.new_record_event = asyncio.Event()
-        self.url_cache = MusicUrlCache()
+        self.polling_event = asyncio.Event()  # 用於控制輪詢的異步事件
+        self.new_record_event = asyncio.Event()  # 新對話記錄事件
+        self.url_cache = MusicUrlCache()  # 緩存音樂真實 URL 避免頻繁解析
 
-        self.all_music = {}
-        self._all_radio = {}  # 电台列表
-        self._web_music_api = {}  # 需要通过api获取播放链接的列表
-        self.music_list = {}  # 播放列表 key 为目录名, value 为 play_list
-        self.default_music_list_names = []  # 非自定义个歌单
-        self.devices = {}  # key 为 did
-        self._cur_did = None  # 当前设备did
-        self.running_task = []
-        self.all_music_tags = {}  # 歌曲额外信息
-        self._tag_generation_task = False
+        self.all_music = {}  # 所有音樂索引 {name: path/url}
+        self._all_radio = {}  # 電台列表
+        self._web_music_api = {}  # 需要通過 API 獲取播放鏈接的列表
+        self.music_list = {}  # 播放列表 key 為目錄名, value 為 play_list
+        self.default_music_list_names = []  # 非自定義歌單 (如默認目錄)
+        self.devices = {}  # 設備對象字典 key 為 did
+        self._cur_did = None  # 當前操作的設備 did
+        self.running_task = []  # 當前正在運行的異步任務列表
+        self.all_music_tags = {}  # 歌曲額外信息 (元數據、標籤)
+        self._tag_generation_task = False  # 標記是否正在生成標籤
         self._extra_index_search = {}
-        self.custom_play_list = None
+        self.custom_play_list = None  # 自定義播放列表
 
         # 初始化配置
         self.init_config()
 
-        # 初始化日志
+        # 初始化日誌
         self.setup_logger()
 
-        # 计划任务
+        # 初始化計畫任務管理器
         self.crontab = Crontab(self.log)
 
         # 初始化 JS 插件管理器
@@ -123,7 +134,7 @@ class XiaoMusic:
             self.log.error(f"Failed to initialize JS Plugin Manager: {e}")
             self.js_plugin_manager = None
 
-        # 初始化 JS 插件适配器
+        # 初始化 JS 插件適配器 (用於格式轉換)
         try:
             from xiaomusic.js_adapter import JSAdapter
 
@@ -132,19 +143,19 @@ class XiaoMusic:
         except Exception as e:
             self.log.error(f"Failed to initialize JS Adapter: {e}")
 
-        # 尝试从设置里加载配置
+        # 嘗試從 setting.json 加載配置
         self.try_init_setting()
 
-        # 启动时重新生成一次播放列表
+        # 啟動時重新生成一次播放列表
         self._gen_all_music_list()
 
-        # 初始化插件
+        # 初始化 Python 插件管理器
         self.plugin_manager = PluginManager(self)
 
-        # 更新设备列表
+        # 更新設備列表
         self.update_devices()
 
-        # 启动统计
+        # 啟動統計模組
         self.analytics = Analytics(self.log, self.config)
 
         debug_config = deepcopy_data_no_sensitive_info(self.config)
@@ -164,18 +175,19 @@ class XiaoMusic:
         **kwargs,
     ):
         """
-        通用方法：调用 JS 插件的方法并返回结果
+        通用方法：調用 JS 插件的方法並返回結果
+        封裝了插件檢查、調用、錯誤處理和結果校驗邏輯
 
         Args:
-            plugin_name: 插件名称
+            plugin_name: 插件名稱
             method_name: 插件方法名（如 get_media_source 或 get_lyric）
-            music_item: 音乐项数据
-            result_key: 返回结果中的字段名（如 'url' 或 'rawLrc'）
-            required_field: 必须存在的字段（用于校验）
-            **kwargs: 传递给插件方法的额外参数
+            music_item: 音樂項數據
+            result_key: 返回結果中的主要字段名（如 'url' 或 'rawLrc'），用於初步校驗成功與否
+            required_field: 必須存在的字段（用於進一步校驗，如必須包含 'url'）
+            **kwargs: 傳遞給插件方法的額外參數
 
         Returns:
-            dict: 包含 success 和对应字段的字典
+            dict: 包含 success 和對應字段的字典，如果失敗則包含 error 信息
         """
         if not music_item:
             return {"success": False, "error": "Music item required"}
@@ -193,6 +205,7 @@ class XiaoMusic:
             result = getattr(self.js_plugin_manager, method_name)(
                 plugin_name, music_item, **kwargs
             )
+            # 兼容性檢查：確保返回了預期的字段
             if (
                 not result
                 or not result.get(result_key)
@@ -284,6 +297,11 @@ class XiaoMusic:
         self.log.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
 
     async def poll_latest_ask(self):
+        """
+        輪詢最新對話記錄
+        定時向小米服務器查詢最新的語音指令，用於觸發音樂播放等功能
+        支持 Mina 接口和 XiaoAi 接口兩種方式
+        """
         async with ClientSession() as session:
             while True:
                 if not self.config.enable_pull_ask:
@@ -305,6 +323,7 @@ class XiaoMusic:
                         self.last_timestamp[did] = int(time.time() * 1000)
 
                     hardware = self.get_hardward(device_id)
+                    # 判斷是否強制使用 Mina 接口
                     if (hardware in GET_ASK_BY_MINA) or self.config.get_ask_by_mina:
                         tasks.append(self.get_latest_ask_by_mina(device_id))
                     else:
@@ -313,6 +332,7 @@ class XiaoMusic:
                         )
                 await asyncio.gather(*tasks)
 
+                # 控制輪詢頻率
                 start = time.perf_counter()
                 await self.polling_event.wait()
                 if self.config.pull_ask_sec <= 1:
@@ -684,29 +704,33 @@ class XiaoMusic:
         return sec
 
     async def get_music_url(self, name):
-        """获取音乐播放地址
+        """
+        獲取音樂播放地址
+        封裝了本地音樂、網絡音樂、代理模式等多種情況的處理邏輯
 
         Args:
-            name: 歌曲名称
+            name: 歌曲名稱 (index 索引中的鍵)
         Returns:
-            tuple: (播放地址, 原始地址) - 网络音乐时可能有原始地址
+            tuple: (播放地址, 原始地址)
+                   - 播放地址：確實可用的 URL (可能是本地服務 URL、網絡 URL 或 代理 URL)
+                   - 原始地址：網絡音樂的原始鏈接 (用於計算時長等)，本地音樂則為 None
         """
         if self.is_web_music(name):
             return await self._get_web_music_url(name)
         return self._get_local_music_url(name), None
 
     async def _get_web_music_url(self, name):
-        """获取网络音乐播放地址"""
+        """獲取網絡音樂播放地址"""
         url = self.all_music[name]
         self.log.info(f"get_music_url web music. name:{name}, url:{url}")
 
-        # 需要通过API获取真实播放地址
+        # 需要通過 API 獲取真實播放地址 (例如某些網站鏈接過期或需簽名)
         if self.is_need_use_play_music_api(name):
             url = await self._get_url_from_api(name, url)
             if not url:
                 return "", None
 
-        # 是否需要代理
+        # 是否需要通過本機代理轉發 (解決 CORS 或 內網穿透問題)
         if self.config.web_music_proxy:
             proxy_url = self._get_proxy_url(url)
             return proxy_url, url
@@ -714,25 +738,32 @@ class XiaoMusic:
         return url, None
 
     async def _get_url_from_api(self, name, url):
-        """通过API获取真实播放地址"""
+        """通過API獲取真實播放地址"""
         headers = self._web_music_api[name].get("headers", {})
+        # 使用 url_cache 緩存短時間內的解析結果，減輕服務器壓力
         url = await self.url_cache.get(url, headers, self.config)
         if not url:
             self.log.error(f"get_music_url use api fail. name:{name}, url:{url}")
         return url
 
     def _get_proxy_url(self, origin_url):
-        """获取代理URL"""
+        """
+        獲取代理 URL
+        將原始 URL base64 編碼後作為參數傳遞給 /proxy 接口
+        """
         urlb64 = base64.b64encode(origin_url.encode("utf-8")).decode("utf-8")
         proxy_url = f"{self.hostname}:{self.public_port}/proxy?urlb64={urlb64}"
         self.log.info(f"Using proxy url: {proxy_url}")
         return proxy_url
 
     def _get_local_music_url(self, name):
-        """获取本地音乐播放地址"""
+        """
+        獲取本地音樂播放地址
+        將本地文件路徑轉換為 HTTP 服務的訪問路徑 (/music/...)
+        """
         filename = self.get_filename(name)
 
-        # 处理文件路径
+        # 處理文件路徑，移除 music_path 前綴，並統一分隔符
         if filename.startswith(self.config.music_path):
             filename = filename[len(self.config.music_path) :]
         filename = filename.replace("\\", "/")
@@ -743,9 +774,10 @@ class XiaoMusic:
             f"_get_local_music_url local music. name:{name}, filename:{filename}"
         )
 
-        # 构造URL
+        # 構造 URL，對文件名進行 URL 編碼
         encoded_name = urllib.parse.quote(filename)
         url = f"{self.hostname}:{self.public_port}/music/{encoded_name}"
+        # 嘗試添加訪問控制參數 (如 token)
         return try_add_access_control_param(self.config, url)
 
     # 给前端调用

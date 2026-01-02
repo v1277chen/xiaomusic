@@ -8,7 +8,11 @@ import logging
 
 
 class JSAdapter:
-    """JS 插件数据适配器"""
+    """
+    JS 插件數據適配器
+    負責將 MusicFree JS 插件返回的各種數據格式 (搜索結果、媒體源、歌詞等)
+    轉換為 Xiaomusic 系統內部統一的數據格式
+    """
 
     def __init__(self, xiaomusic):
         self.xiaomusic = xiaomusic
@@ -17,7 +21,12 @@ class JSAdapter:
     def format_search_results(
         self, plugin_results: list[dict], plugin_name: str
     ) -> list[str]:
-        """格式化搜索结果为 xiaomusic 格式，返回 ID 列表"""
+        """
+        格式化搜索結果為 xiaomusic 格式，並緩存到 all_music 字典中
+        :param plugin_results: 插件返回的原始搜索結果列表
+        :param plugin_name: 插件名稱
+        :return: 格式化後的音樂 ID 列表
+        """
         formatted_ids = []
         for item in plugin_results:
             if not isinstance(item, dict):
@@ -25,6 +34,7 @@ class JSAdapter:
                 continue
 
             # 构造符合 xiaomusic 格式的音乐项
+            # 生成唯一的 music_id (online_插件名_ID)
             music_id = self._generate_music_id(
                 plugin_name, item.get("id", ""), item.get("songmid", "")
             )
@@ -35,7 +45,7 @@ class JSAdapter:
                 "album": item.get("album", item.get("albumName", "")),
                 "source": "online",
                 "plugin_name": plugin_name,
-                "original_data": item,
+                "original_data": item,  # 保存原始数据供后续获取播放链接使用
                 "duration": item.get("duration", 0),
                 "cover": item.get(
                     "artwork", item.get("cover", item.get("albumPic", ""))
@@ -45,7 +55,7 @@ class JSAdapter:
                 "quality": item.get("quality", ""),
             }
 
-            # 添加到 all_music 字典中
+            # 添加到 all_music 字典中，以便后续通过 ID 查找
             self.xiaomusic.all_music[music_id] = music_item
             formatted_ids.append(music_id)
 
@@ -54,7 +64,10 @@ class JSAdapter:
     def format_media_source_result(
         self, media_source_result: dict, music_item: dict
     ) -> dict:
-        """格式化媒体源结果"""
+        """
+        格式化媒體源結果
+        提取播放 URL 和必要的 HTTP 請求頭 (如 Cookie, Referer)
+        """
         if not media_source_result:
             return {}
 

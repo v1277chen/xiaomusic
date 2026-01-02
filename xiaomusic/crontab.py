@@ -8,7 +8,11 @@ from xiaomusic.holiday import is_off_day, is_working_day
 
 
 class CustomCronTrigger(BaseTrigger):
-    """自定义触发器，支持workday/offday特殊值"""
+    """
+    自定義觸發器
+    擴展了標準 Cron 觸發器，支持 "workday" (工作日) 和 "offday" (休息日) 特殊標記
+    格式示例： "0 8 * * * #workday" (僅在工作日的 8:00 觸發)
+    """
 
     def __init__(self, cron_expression, holiday_checker=None):
         self.cron_expression = cron_expression
@@ -47,7 +51,7 @@ class CustomCronTrigger(BaseTrigger):
             else:  # check_offday
                 valid = is_off_day(year, month, day)
 
-            # 如果日期有效，返回时间；否则寻找下一个有效时间
+            # 如果日期有效，返回时间；否则寻找下一个有效时间 (遞歸調用)
             if valid:
                 return next_time
             else:
@@ -57,6 +61,10 @@ class CustomCronTrigger(BaseTrigger):
 
 
 class Crontab:
+    """
+    定時任務管理器
+    基於 AsyncIOScheduler，負責管理系統中的所有定時任務 (播放、停止、刷新列表等)
+    """
     def __init__(self, log):
         self.log = log
         self.scheduler = AsyncIOScheduler()
@@ -65,6 +73,11 @@ class Crontab:
         self.scheduler.start()
 
     def add_job(self, expression, job):
+        """
+        添加通用任務
+        :param expression: cron 表達式
+        :param job: 異步任務函數
+        """
         try:
             # 检查表达式中是否包含注释标记
             if "#" in expression and (
@@ -80,49 +93,49 @@ class Crontab:
         except Exception as e:
             self.log.exception(f"Exception {e}")
 
-    # 添加关机任务
+    # 添加關機任務
     def add_job_stop(self, expression, xiaomusic, did, **kwargs):
         async def job():
             await xiaomusic.stop(did, "notts")
 
         self.add_job(expression, job)
 
-    # 添加播放任务
+    # 添加播放任務
     def add_job_play(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
             await xiaomusic.play(did, arg1)
 
         self.add_job(expression, job)
 
-    # 添加播放列表任务
+    # 添加播放列表任務
     def add_job_play_music_list(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
             await xiaomusic.play_music_list(did, arg1)
 
         self.add_job(expression, job)
 
-    # 添加语音播放任务
+    # 添加語音播放 TTS 任務
     def add_job_tts(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
             await xiaomusic.do_tts(did, arg1)
 
         self.add_job(expression, job)
 
-    # 刷新播放列表任务
+    # 刷新本地音樂列表任務
     def add_job_refresh_music_list(self, expression, xiaomusic, **kwargs):
         async def job():
             await xiaomusic.gen_music_list()
 
         self.add_job(expression, job)
 
-    # 设置音量任务
+    # 設置音量任務
     def add_job_set_volume(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
             await xiaomusic.set_volume(did, arg1)
 
         self.add_job(expression, job)
 
-    # 设置播放类型任务
+    # 設置播放類型任務
     def add_job_set_play_type(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
             play_type = int(arg1)
@@ -130,7 +143,7 @@ class Crontab:
 
         self.add_job(expression, job)
 
-    # 开启或关闭获取对话记录
+    # 開啟或關閉獲取對話記錄 (輪詢開關)
     def add_job_set_pull_ask(self, expression, xiaomusic, did, arg1, **kwargs):
         async def job():
             if arg1 == "enable":
@@ -140,7 +153,7 @@ class Crontab:
 
         self.add_job(expression, job)
 
-    # 更新网络歌单
+    # 更新網絡歌單任務
     def add_job_refresh_web_music_list(self, expression, xiaomusic, **kwargs):
         async def job():
             await xiaomusic.refresh_web_music_list()

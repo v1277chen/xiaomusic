@@ -4,6 +4,11 @@ import pkgutil
 
 
 class PluginManager:
+    """
+    Python 插件管理器
+    負責加載和執行 Python 編寫的插件模組
+    注意：這與 js_plugin_manager 不同，後者管理 JavaScript 插件
+    """
     def __init__(self, xiaomusic, plugin_dir="plugins"):
         self.xiaomusic = xiaomusic
         self.log = xiaomusic.log
@@ -11,6 +16,10 @@ class PluginManager:
         self._load_plugins(plugin_dir)
 
     def _load_plugins(self, plugin_dir):
+        """
+        動態加載指定目錄下的所有 Python 插件
+        插件目錄需為 Python 包結構
+        """
         # 假设 plugins 已经在搜索路径上
         package_name = plugin_dir
         package = importlib.import_module(package_name)
@@ -22,10 +31,12 @@ class PluginManager:
                 continue
             module = importlib.import_module(modname)
             # 将 log 和 xiaomusic 注入模块的命名空间
+            # 這樣插件內部就可以直接使用 log 和 xiaomusic 對象
             module.log = self.log
             module.xiaomusic = self.xiaomusic
 
             # 动态获取模块中与文件名同名的函数
+            # 約定：插件文件名即為入口函數名
             function_name = modname.split(".")[-1]  # 从模块全名提取函数名
             if hasattr(module, function_name):
                 self._funcs[function_name] = getattr(module, function_name)
