@@ -149,24 +149,24 @@ socketio_app = socketio.ASGIApp(
 )
 
 
-# Socket.IO事件处理
+# Socket.IO事件處理
 @sio.event
 async def connect(sid, environ, auth):
     global onlines
-    print(f"客户端连接: {sid}")
+    print(f"客戶端連接: {sid}")
     onlines.update([sid])
-    await sio.emit("message", {"data": "欢迎连接"}, room=sid)
+    await sio.emit("message", {"data": "歡迎連接"}, room=sid)
 
 
 @sio.event
 async def disconnect(sid):
-    print(f"客户端断开: {sid}")
+    print(f"客戶端斷開: {sid}")
     onlines.discard(sid)
 
 
 @sio.on("message")
 async def custom_event(sid, data):
-    log.info(f"收到来自 {sid} 的数据: {data}")
+    log.info(f"收到來自 {sid} 的數據: {data}")
     await sio.emit("response", {"action": "切歌", "status": data})
 
 
@@ -181,12 +181,12 @@ async def thdaction(item: Item):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许访问的源
+    allow_origins=["*"],  # 允許訪問的源
     allow_credentials=False,  # 支持 cookie
-    allow_methods=["*"],  # 允许使用的请求方法
-    allow_headers=["*"],  # 允许携带的 Headers
+    allow_methods=["*"],  # 允許使用的請求方法
+    allow_headers=["*"],  # 允許攜帶的 Headers
 )
-# 添加 GZip 中间件
+# 添加 GZip 中間件
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
@@ -295,12 +295,12 @@ async def get_real_music_url(
     用於解決前端直接播放時的 CORS (跨域資源共享) 問題
     """
     try:
-        # 获取真实的音乐播放URL
+        # 獲取真實的音樂播放URL
         return await xiaomusic.get_real_url_of_openapi(url)
 
     except Exception as e:
-        log.error(f"获取真实音乐URL失败: {e}")
-        # 如果代理获取失败，仍然返回原始URL
+        log.error(f"獲取真實音樂URL失敗: {e}")
+        # 如果代理獲取失敗，仍然返回原始URL
         return {"success": False, "realUrl": url, "error": str(e)}
 
 
@@ -311,9 +311,9 @@ async def get_media_source(request: Request, Verifcation=Depends(verification)):
     通過調用相應的插件獲取某一首歌曲的播放鏈接
     """
     try:
-        # 获取请求数据
+        # 獲取請求數據
         data = await request.json()
-        # 调用公共函数处理
+        # 調用公共函數處理
         return await xiaomusic.get_media_source_url(data)
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -326,9 +326,9 @@ async def get_media_lyric(request: Request, Verifcation=Depends(verification)):
     通過調用相應的插件獲取某一首歌曲的歌詞
     """
     try:
-        # 获取请求数据
+        # 獲取請求數據
         data = await request.json()
-        # 调用公共函数处理
+        # 調用公共函數處理
         return await xiaomusic.get_media_lyric(data)
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -342,14 +342,14 @@ async def play_online_music(request: Request, Verifcation=Depends(verification))
     支持 OpenAPI 模式
     """
     try:
-        # 获取请求数据
+        # 獲取請求數據
         data = await request.json()
         did = data.get("did")
         openapi_info = xiaomusic.js_plugin_manager.get_openapi_info()
         if openapi_info.get("enabled", False):
             media_source = await xiaomusic.get_real_url_of_openapi(data.get("url"))
         else:
-            # 调用公共函数处理,获取音乐真实播放URL
+            # 調用公共函數處理,獲取音樂真實播放URL
             media_source = await xiaomusic.get_media_source_url(data)
         if not media_source or not media_source.get("url"):
             return {"success": False, "error": "Failed to get media source URL"}
@@ -360,22 +360,22 @@ async def play_online_music(request: Request, Verifcation=Depends(verification))
         return {"success": False, "error": str(e)}
 
 
-# =====================================插件入口函数===============
+# =====================================插件入口函數===============
 
 
 @app.get("/api/js-plugins")
 def get_js_plugins(
-    enabled_only: bool = Query(False, description="是否只返回启用的插件"),
+    enabled_only: bool = Query(False, description="是否只返回啟用的插件"),
     Verifcation=Depends(verification),
 ):
-    """获取插件列表"""
+    """獲取插件列表"""
     try:
         if (
             not hasattr(xiaomusic, "js_plugin_manager")
             or not xiaomusic.js_plugin_manager
         ):
             return {"success": False, "error": "JS Plugin Manager not available"}
-        # 重新加载插件
+        # 重新加載插件
         # xiaomusic.js_plugin_manager.reload_plugins()
 
         if enabled_only:
@@ -390,7 +390,7 @@ def get_js_plugins(
 
 @app.put("/api/js-plugins/{plugin_name}/enable")
 def enable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
-    """启用插件"""
+    """啟用插件"""
     try:
         if (
             not hasattr(xiaomusic, "js_plugin_manager")
@@ -424,7 +424,7 @@ def disable_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
 
 @app.delete("/api/js-plugins/{plugin_name}/uninstall")
 def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
-    """卸载插件"""
+    """卸載插件"""
     try:
         if (
             not hasattr(xiaomusic, "js_plugin_manager")
@@ -443,11 +443,11 @@ def uninstall_js_plugin(plugin_name: str, Verifcation=Depends(verification)):
 async def upload_js_plugin(
     file: UploadFile = File(...), verification=Depends(verification)
 ):
-    """上传 JS 插件"""
+    """上傳 JS 插件"""
     try:
-        # 验证文件扩展名
+        # 驗證文件擴展名
         if not file.filename.endswith(".js"):
-            raise HTTPException(status_code=400, detail="只允许上传 .js 文件")
+            raise HTTPException(status_code=400, detail="只允許上傳 .js 文件")
 
         # 使用 JSPluginManager 中定义的插件目录
         if (
@@ -461,14 +461,14 @@ async def upload_js_plugin(
         plugin_dir = xiaomusic.js_plugin_manager.plugins_dir
         os.makedirs(plugin_dir, exist_ok=True)
         file_path = os.path.join(plugin_dir, file.filename)
-        # 校验是否已存在同名js插件 存在则提示，停止上传
+        # 校驗是否已存在同名js插件 存在則提示，停止上傳
         if os.path.exists(file_path):
             raise HTTPException(
-                status_code=409, detail=f"插件 {file.filename} 已存在，请重命名后再上传"
+                status_code=409, detail=f"插件 {file.filename} 已存在，請重命名後再上傳"
             )
         file_path = os.path.join(plugin_dir, file.filename)
 
-        # 写入文件内容
+        # 寫入文件內容
         async with aiofiles.open(file_path, "wb") as f:
             content = await file.read()
             await f.write(content)
@@ -477,21 +477,21 @@ async def upload_js_plugin(
         plugin_name = os.path.splitext(file.filename)[0]
         xiaomusic.js_plugin_manager.update_plugin_config(plugin_name, file.filename)
 
-        # 重新加载插件
+        # 重新加載插件
         xiaomusic.js_plugin_manager.reload_plugins()
 
-        return {"success": True, "message": "插件上传成功"}
+        return {"success": True, "message": "插件上傳成功"}
 
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
-# =====================================开放接口配置函数===============
+# =====================================開放接口配置函數===============
 
 
 @app.get("/api/openapi/load")
 def get_openapi_info(Verifcation=Depends(verification)):
-    """获取开放接口配置信息"""
+    """獲取開放接口配置信息"""
     try:
         openapi_info = xiaomusic.js_plugin_manager.get_openapi_info()
         return {"success": True, "data": openapi_info}
@@ -501,7 +501,7 @@ def get_openapi_info(Verifcation=Depends(verification)):
 
 @app.post("/api/openapi/toggle")
 def toggle_openapi(Verifcation=Depends(verification)):
-    """开放接口状态切换"""
+    """開放接口狀態切換"""
     try:
         return xiaomusic.js_plugin_manager.toggle_openapi()
     except Exception as e:
@@ -510,7 +510,7 @@ def toggle_openapi(Verifcation=Depends(verification)):
 
 @app.post("/api/openapi/updateUrl")
 async def update_openapi_url(request: Request, Verifcation=Depends(verification)):
-    """更新开放接口地址"""
+    """更新開放接口地址"""
     try:
         request_json = await request.json()
         search_url = request_json.get("search_url")
@@ -521,7 +521,7 @@ async def update_openapi_url(request: Request, Verifcation=Depends(verification)
         return {"success": False, "error": str(e)}
 
 
-# =====================================开放接口函数END===============
+# =====================================開放接口函數END===============
 
 
 @app.get("/playingmusic")
@@ -745,14 +745,14 @@ async def downloadjson(data: UrlInfo, Verifcation=Depends(verification)):
 def downloadlog(Verifcation=Depends(verification)):
     file_path = xiaomusic.config.log_file
     if os.path.exists(file_path):
-        # 创建一个临时文件来保存日志的快照
+        # 創建一個臨時文件來保存日誌的快照
         temp_file = tempfile.NamedTemporaryFile(delete=False)
         try:
             with open(file_path, "rb") as f:
                 shutil.copyfileobj(f, temp_file)
             temp_file.close()
 
-            # 使用BackgroundTask在响应发送完毕后删除临时文件
+            # 使用BackgroundTask在響應發送完畢後刪除臨時文件
             def cleanup_temp_file(tmp_file_path):
                 os.remove(tmp_file_path)
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小爱音箱播放器</title>
+    <title>小愛音箱播放器</title>
     <link rel="icon" href="./favicon.ico">
 
     <!-- DaisyUI and Tailwind -->
@@ -41,7 +41,7 @@
             <div class="flex-1">
                 <a class="btn btn-ghost text-xl px-2">
                     <span class="material-icons icon-lg mr-2">music_note</span>
-                    小爱音箱播放器
+                    小愛音箱播放器
                 </a>
                 <a href="https://xdocs.hanxi.cc/issues/changelog.html" target="_blank">
                     <div class="badge badge-primary ml-2" v-if="version">v{{ version }}</div>
@@ -50,7 +50,7 @@
             <div class="flex-none gap-2">
                 <!-- 搜索框 -->
                 <div class="relative">
-                    <input type="text" v-model="searchQuery" @input="handleSearch" placeholder="搜索歌曲、歌手或专辑..."
+                    <input type="text" v-model="searchQuery" @input="handleSearch" placeholder="搜尋歌曲、歌手或專輯..."
                         class="input input-bordered w-full pr-10" />
                     <span class="absolute right-3 top-1/2 -translate-y-1/2">
                         <i class="material-icons text-gray-400">search</i>
@@ -64,7 +64,7 @@
                         </label>
                         <ul tabindex="0"
                             class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 max-h-96 overflow-y-auto z-[9999]">
-                            <li class="menu-title">选择主题</li>
+                            <li class="menu-title">選擇主題</li>
                             <li v-for="theme in themes" :key="theme">
                                 <a @click="setTheme(theme)" :class="{ 'active': currentTheme === theme }">
                                     {{ theme }}
@@ -113,13 +113,13 @@
                                 <span v-else v-html="device.icon" class="icon"></span>
                             </button>
                             <div class="divider divider-horizontal my-1"></div>
-                            <button class="btn btn-circle tooltip tooltip-right" data-tip="刷新列表"
+                            <button class="btn btn-circle tooltip tooltip-right" data-tip="重新整理列表"
                                 @click="handleRefreshClick">
                                 <span class="material-icons icon">refresh</span>
                             </button>
 
                             <div class="divider divider-horizontal my-1"></div>
-                            <button class="btn btn-circle tooltip tooltip-right active" data-tip="请我喝杯咖啡"
+                            <button class="btn btn-circle tooltip tooltip-right active" data-tip="請我喝杯咖啡"
                                 @click="showQRCode">
                                 <span class="material-icons icon">qr_code_scanner</span>
                             </button>
@@ -127,21 +127,29 @@
                     </div>
 
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-bold">我的歌单</h2>
+                        <h2 class="text-xl font-bold">我的歌單</h2>
                     </div>
                     <!-- 系统歌单 -->
                     <ul class="menu gap-1 mb-4">
-                        <li v-for="playlist in systemPlaylists" :key="playlist.id">
+                        <li v-for="playlist in systemPlaylists" :key="playlist.name">
                             <a class="flex justify-between" :class="{ active: curSelectPlaylist === playlist.name }"
                                 @click="selectPlaylist(playlist.name)">
-                                {{ playlist.name }}
+                                <div class="flex items-center gap-2">
+                                    <span class="material-icons">{{
+                                        playlist.name === '所有歌曲' ? 'queue_music' :
+                                        playlist.name === '收藏' ? 'favorite' :
+                                        playlist.name === '最近新增' ? 'new_releases' :
+                                        'download'
+                                        }}</span>
+                                    <span>{{ playlist.displayName }}</span>
+                                </div>
                                 <div class="badge badge-sm">{{ playlist.count }}</div>
                             </a>
                         </li>
                     </ul>
                     <!-- 自定义歌单 -->
                     <div v-if="customPlaylists && customPlaylists.length > 0">
-                        <div class="divider">自定义歌单</div>
+                        <div class="divider">自訂歌單</div>
                         <ul class="menu gap-1">
                             <li v-for="playlist in customPlaylists" :key="playlist.name">
                                 <a class="flex justify-between" :class="{ active: curSelectPlaylist === playlist.name }"
@@ -164,9 +172,9 @@
                             <thead class="sticky top-0 bg-base-100 z-20">
                                 <tr>
                                     <th class="w-12 bg-base-100">#</th>
-                                    <th class="min-w-[240px] bg-base-100">歌曲标题</th>
+                                    <th class="min-w-[240px] bg-base-100">歌曲標題</th>
                                     <th class="w-48 bg-base-100">歌手</th>
-                                    <th class="w-48 bg-base-100">专辑</th>
+                                    <th class="w-48 bg-base-100">專輯</th>
                                     <th class="w-20 bg-base-100">操作</th>
                                 </tr>
                             </thead>
@@ -232,7 +240,7 @@
                                                         <button @click.stop="deleteMusic(song)"
                                                             class="flex items-center gap-2 w-full px-4 py-2 hover:bg-base-200 text-error">
                                                             <span class="material-icons icon-sm">delete</span>
-                                                            删除
+                                                            刪除
                                                         </button>
                                                     </li>
                                                 </ul>
@@ -253,21 +261,22 @@
                     <div class="flex items-center gap-4">
                         <div class="avatar cursor-pointer">
                             <!-- <a href="./now_playing.html" target="_blank"> -->
-                                <div class="w-12 rounded-lg">
-<!--                                    <img :src="currentSong?.cover" :alt="currentSong?.title" />-->
-                                    <img :src="currentSong?.cover || '/static/xiaoai.png'" :alt="currentSong?.title" />
-                                </div>
+                            <div class="w-12 rounded-lg">
+                                <!--                                    <img :src="currentSong?.cover" :alt="currentSong?.title" />-->
+                                <img :src="currentSong?.cover || '/static/xiaoai.png'" :alt="currentSong?.title" />
+                            </div>
                             <!-- </a> -->
                         </div>
-                        <div class="cursor-pointer hover:text-primary transition-colors" class="cursor-pointer hover:text-primary transition-colors">
+                        <div class="cursor-pointer hover:text-primary transition-colors"
+                            class="cursor-pointer hover:text-primary transition-colors">
                             <!-- <a href="./now_playing.html" target="_blank"> -->
-                                <div class="font-bold">{{ currentSong?.title }}</div>
-                                <div class="text-sm opacity-50">
-                                    {{ currentSong?.artist }} - {{ currentSong?.album }}
-                                </div>
-                                <div class="text-sm opacity-50">
-                                    {{ currentPlaylist }}
-                                </div>
+                            <div class="font-bold">{{ currentSong?.title }}</div>
+                            <div class="text-sm opacity-50">
+                                {{ currentSong?.artist }} - {{ currentSong?.album }}
+                            </div>
+                            <div class="text-sm opacity-50">
+                                {{ currentPlaylist }}
+                            </div>
                             <!-- </a> -->
                         </div>
                         <button class="btn btn-ghost btn-circle btn-sm"
@@ -283,7 +292,8 @@
                         <!-- 添加当前播放列表信息 -->
                         <div class="flex gap-4 items-center">
                             <button class="btn btn-circle btn-sm tooltip tooltip-bottom"
-                                :data-tip="playModes[currentPlayMode].cmd" @click="togglePlayMode">
+                                :data-tip="playModes[currentPlayMode].label || playModes[currentPlayMode].cmd"
+                                @click="togglePlayMode">
                                 <span class="material-icons icon-sm">{{
                                     currentPlayMode === 0 ? 'repeat' :
                                     currentPlayMode === 1 ? 'repeat_one' :
@@ -337,7 +347,7 @@
             </div>
             <div class="modal-action">
                 <form method="dialog">
-                    <button class="btn">关闭</button>
+                    <button class="btn">關閉</button>
                 </form>
             </div>
         </div>
@@ -352,11 +362,11 @@
                 const isDarkTheme = ref(false);
                 const currentTheme = ref(localStorage.getItem('theme') || 'light');
                 const themes = ref([
-                    "light",    // 默认亮色主题
+                    "light",    // 默認亮色主題
                     "pastel",
                     "emerald",  // 清新的绿色系
-                    "dark",     // 默认暗色主题
-                    "synthwave",// 赛博朋克风格
+                    "dark",     // 默認暗色主題
+                    "synthwave",// 賽博龐克風格
                     "dracula",   // 经典暗色主题
                     "night",    // 深邃的黑色系
                     "black",    // 纯黑色系
@@ -383,9 +393,9 @@
                 // 添加音频播放相关状态
                 const audioPlayer = ref(null);
                 const playModes = ref([
-                    { value: 0, icon: 'repeat', cmd: '全部循环', handler: () => playNext() },
+                    { value: 0, icon: 'repeat', cmd: '全部循环', label: '全部循環', handler: () => playNext() },
                     {
-                        value: 1, icon: 'repeat_one', cmd: '单曲循环', handler: () => {
+                        value: 1, icon: 'repeat_one', cmd: '单曲循环', label: '單曲循環', handler: () => {
                             if (audioPlayer.value) {
                                 audioPlayer.value.currentTime = 0;
                                 audioPlayer.value.play();
@@ -393,20 +403,20 @@
                         }
                     },
                     {
-                        value: 2, icon: 'shuffle', cmd: '随机播放', handler: () => {
+                        value: 2, icon: 'shuffle', cmd: '随机播放', label: '隨機播放', handler: () => {
                             const randomIndex = Math.floor(Math.random() * songs.value.length);
                             playSong(songs.value[randomIndex]);
                         }
                     },
                     {
-                        value: 3, icon: 'arrow_forward', cmd: '单曲播放', handler: () => {
+                        value: 3, icon: 'arrow_forward', cmd: '单曲播放', label: '單曲播放', handler: () => {
                             if (audioPlayer.value) {
                                 audioPlayer.value.pause();
                                 isPlaying.value = false;
                             }
                         }
                     },
-                    { value: 4, icon: 'playlist_play', cmd: '顺序播放', handler: () => playNext() }
+                    { value: 4, icon: 'playlist_play', cmd: '顺序播放', label: '順序播放', handler: () => playNext() }
                 ]);
                 const currentPlayMode = ref(parseInt(localStorage.getItem('play_mode') || '0'));
 
@@ -502,7 +512,7 @@
                                         currentSong.value = {
                                             title: tags.title || data.cur_music,
                                             artist: tags.artist || '未知歌手',
-                                            album: tags.album || '未知专辑',
+                                            album: tags.album || '未知專輯',
                                             cover: tags.picture || "/static/xiaoai.png",
                                             url: musicInfo.url,
                                             isPlaying: data.is_playing
@@ -514,7 +524,7 @@
                                     currentSong.value = {
                                         title: data.cur_music,
                                         artist: '未知歌手',
-                                        album: '未知专辑',
+                                        album: '未知專輯',
                                         cover: "/static/xiaoai.png",
                                         isPlaying: data.is_playing
                                     };
@@ -535,9 +545,9 @@
                     currentTheme.value = theme;
                     document.documentElement.setAttribute('data-theme', theme);
                     localStorage.setItem('theme', theme);
-                    // 更新 isDarkTheme 状态，用于图标显示
+                    // 更新 isDarkTheme 狀態，用於圖標顯示
                     isDarkTheme.value = ['dark', 'black', 'luxury', 'dracula', 'night', 'coffee'].includes(theme);
-                    showMessage(`已切换到 ${theme} 主题`, 'alert-success');
+                    showMessage(`已切換到 ${theme} 主題`, 'alert-success');
                 };
 
                 const filteredSongs = computed(() => {
@@ -593,7 +603,7 @@
                             dids.forEach(deviceId => {
                                 devicesList.push({
                                     id: deviceId,
-                                    name: `小爱音箱 ${deviceId}`,
+                                    name: `小愛音箱 ${deviceId}`,
                                     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`
                                 });
                             });
@@ -681,7 +691,7 @@
                                     id: songName,
                                     title: songName,
                                     artist: '未知歌手',
-                                    album: '未知专辑',
+                                    album: '未知專輯',
                                     duration: '0:00',
                                     cover: '/static/xiaoai.png',
                                     url: '',
@@ -693,7 +703,7 @@
                                 id: songName,
                                 title: info.tags?.title || songName,
                                 artist: info.tags?.artist || '未知歌手',
-                                album: info.tags?.album || '未知专辑',
+                                album: info.tags?.album || '未知專輯',
                                 year: info.tags?.year || '',
                                 genre: info.tags?.genre || '',
                                 duration: info.duration ? formatTime(info.duration) : '0:00',
@@ -745,21 +755,30 @@
                         // 获取音乐列表数据
                         const data = await API.getMusicList();
 
-                        // 系统预设的歌单列表
+                        // 系統預設的歌單列表 (後端鍵值)
                         const systemPlaylistNames = ['所有歌曲', '所有电台', '收藏', '下载', '最近新增'];
+                        // 顯示名稱映射
+                        const playlistNameMap = {
+                            '所有歌曲': '所有歌曲',
+                            '所有电台': '所有電台',
+                            '收藏': '收藏',
+                            '下载': '下載',
+                            '最近新增': '最近新增'
+                        };
 
                         // 设置系统播放列表
                         systemPlaylists.value = systemPlaylistNames.map((name, index) => ({
                             id: index + 1,
                             name,
+                            displayName: playlistNameMap[name] || name,
                             count: data[name]?.length || 0
                         }));
 
                         // 获取所有歌单名称
                         const allPlaylistNames = Object.keys(data);
 
-                        // 过滤出自定义歌单（排除系统预设歌单和特殊歌单）
-                        const excludedPlaylists = [...systemPlaylistNames, '临时搜索列表', '全部', '其他'];
+                        // 過濾出自定義歌單（排除系統預設歌單和特殊歌單）
+                        const excludedPlaylists = [...systemPlaylistNames, '临时搜索列表', '全部', '其他', '所有电台'];
                         const customPlaylistNames = allPlaylistNames.filter(
                             name => !excludedPlaylists.includes(name)
                         );
@@ -799,7 +818,7 @@
                         audio.addEventListener('error', (e) => {
                             console.error('Audio playback error:', e);
                             const error = e.target.error;
-                            let errorMessage = '播放出错';
+                            let errorMessage = '播放出錯';
 
                             if (error) {
                                 switch (error.code) {
@@ -810,10 +829,10 @@
                                         errorMessage = '网络错误';
                                         break;
                                     case error.MEDIA_ERR_DECODE:
-                                        errorMessage = '解码错误';
+                                        errorMessage = '解碼錯誤';
                                         break;
                                     case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                                        errorMessage = '不支持的音频格式';
+                                        errorMessage = '不支援的音訊格式';
                                         break;
                                 }
                             }
@@ -880,7 +899,7 @@
                         }
                     } catch (error) {
                         console.error('Error initializing audio player:', error);
-                        showMessage('初始化音频播放器失败', 'alert-error');
+                        showMessage('初始化音訊播放器失敗', 'alert-error');
                     }
                 };
 
@@ -888,7 +907,7 @@
                     try {
                         if (!song || !song.title) {
                             console.error('Invalid song object:', song);
-                            showMessage('无效的歌曲信息', 'alert-error');
+                            showMessage('無效的歌曲信息', 'alert-error');
                             return;
                         }
 
@@ -901,43 +920,43 @@
                                 const musicInfo = await API.getMusicInfo(song.id);
                                 if (!musicInfo || musicInfo.ret !== 'OK') {
                                     console.error('Failed to get music info:', musicInfo);
-                                    showMessage('获取歌曲信息失败', 'alert-error');
+                                    showMessage('獲取歌曲信息失敗', 'alert-error');
                                     return;
                                 }
 
                                 if (!musicInfo.url) {
                                     console.error('No URL in music info:', musicInfo);
-                                    showMessage('歌曲URL无效', 'alert-error');
+                                    showMessage('歌曲URL無效', 'alert-error');
                                     return;
                                 }
 
-                                // 验证URL是否有效
+                                // 驗證URL是否有效
                                 const validUrl = new URL(musicInfo.url);
                                 if (!validUrl.pathname.endsWith('.mp3')) {
                                     console.error('Invalid music URL format:', validUrl);
-                                    showMessage('音乐文件格式不支持', 'alert-error');
+                                    showMessage('音樂文件格式不支援', 'alert-error');
                                     return;
                                 }
 
                                 if (audioPlayer.value) {
                                     try {
                                         if (audioPlayer.value.src === musicInfo.url) {
-                                            // 同一首歌，切换播放状态
+                                            // 同一首歌，切換播放狀態
                                             if (audioPlayer.value.paused) {
                                                 await audioPlayer.value.play();
                                                 isPlaying.value = true;
-                                                showMessage('继续播放');
+                                                showMessage('繼續播放');
                                             } else {
                                                 audioPlayer.value.pause();
                                                 isPlaying.value = false;
-                                                showMessage('暂停播放');
+                                                showMessage('暫停播放');
                                             }
                                         } else {
                                             // 播放新歌曲
                                             audioPlayer.value.src = musicInfo.url;
                                             await audioPlayer.value.play();
                                             isPlaying.value = true;
-                                            showMessage('开始播放新歌曲');
+                                            showMessage('開始播放新歌曲');
                                         }
 
                                         // 更新当前歌曲和播放状态
@@ -953,14 +972,14 @@
                                         }));
                                     } catch (playError) {
                                         console.error('Error playing audio:', playError);
-                                        showMessage('播放失败: ' + playError.message, 'alert-error');
-                                        // 重置播放状态
+                                        showMessage('播放失敗: ' + playError.message, 'alert-error');
+                                        // 重置播放狀態
                                         isPlaying.value = false;
                                         localStorage.setItem("is_playing", "false");
                                     }
                                 } else {
                                     console.error('Audio player not initialized');
-                                    showMessage('音频播放器未初始化', 'alert-error');
+                                    showMessage('音訊播放器未初始化', 'alert-error');
                                 }
                             } catch (error) {
                                 console.error('Error in web playback:', error);
@@ -993,20 +1012,20 @@
                                         localStorage.setItem("cur_music", song.id);
                                         localStorage.setItem("cur_playlist", currentPlaylist);
                                         localStorage.setItem("is_playing", "true");
-                                        showMessage('开始播放');
+                                        showMessage('開始播放');
                                     } else {
                                         console.error('Device playback failed:', response);
-                                        showMessage('设备播放失败', 'alert-error');
+                                        showMessage('設備播放失敗', 'alert-error');
                                     }
                                 }
                             } catch (error) {
                                 console.error('Error in device playback:', error);
-                                showMessage('设备播放出错: ' + error.message, 'alert-error');
+                                showMessage('設備播放出錯: ' + error.message, 'alert-error');
                             }
                         }
                     } catch (error) {
                         console.error('Error in playSong:', error);
-                        showMessage('播放失败，请重试', 'alert-error');
+                        showMessage('播放失敗，請重試', 'alert-error');
                     }
                 };
 
@@ -1026,36 +1045,36 @@
                         } else {
                             try {
                                 if (isPlaying.value) {
-                                    // 如果正在播放，则暂停
+                                    // 假如正在播放，則暫停
                                     const response = await API.sendCommand(window.did, API.commands.PLAY_PAUSE)
                                     if (response.ret === 'OK') {
                                         isPlaying.value = false
-                                        showMessage('小爱同学: 暂停播放')
+                                        showMessage('小愛同學: 暫停播放')
                                     }
                                 } else {
-                                    // 如果当前是暂停状态，获取当前歌曲信息并重新播放
+                                    // 如果當前是暫停狀態，獲取當前歌曲信息並重新播放
                                     const status = await API.getPlayingStatus(window.did)
                                     if (status.ret === 'OK' && status.cur_music && status.cur_playlist) {
-                                        // 使用 playmusiclist 接口重新播放当前歌曲
+                                        // 使用 playmusiclist 接口重新播放當前歌曲
                                         const response = await API.playMusicFromList(window.did, status.cur_playlist, status.cur_music)
                                         if (response.ret === 'OK') {
                                             isPlaying.value = true
-                                            showMessage('小爱同学: 开始播放')
+                                            showMessage('小愛同學: 開始播放')
                                         } else {
-                                            showMessage('小爱同学: 播放失败', 'error')
+                                            showMessage('小愛同學: 播放失敗', 'error')
                                         }
                                     } else {
-                                        showMessage('小爱同学: 获取播放信息失败', 'error')
+                                        showMessage('小愛同學: 獲取播放信息失敗', 'error')
                                     }
                                 }
                             } catch (error) {
                                 console.error('Error toggling play state:', error)
-                                showMessage('小爱同学: 播放控制失败', 'error')
+                                showMessage('小愛同學: 播放控制失敗', 'error')
                             }
                         }
                     } catch (error) {
                         console.error('Error toggling play state:', error);
-                        showMessage('播放控制失败，请重试'  + window.did, 'alert-error');
+                        showMessage('播放控制失敗，請重試' + window.did, 'alert-error');
                     }
                 };
 
@@ -1119,7 +1138,7 @@
                         }
                     } catch (error) {
                         console.error('Error playing previous song:', error);
-                        showMessage('切换上一首失败，请重试', 'alert-error');
+                        showMessage('切換上一首失敗，請重試', 'alert-error');
                     }
                 };
 
@@ -1143,7 +1162,7 @@
                         }
                     } catch (error) {
                         console.error('Error playing next song:', error);
-                        showMessage('切换下一首失败，请重试', 'alert-error');
+                        showMessage('切換下一首失敗，請重試', 'alert-error');
                     }
                 };
 
@@ -1156,19 +1175,19 @@
                             // Web播放模式下直接更新
                             currentPlayMode.value = newMode;
                             localStorage.setItem('play_mode', newMode.toString());
-                            showMessage(`已切换到${playModes.value[newMode].cmd}模式`, 'alert-info');
+                            showMessage(`已切換到${playModes.value[newMode].label}模式`, 'alert-info');
                         } else {
                             // 设备播放模式
                             const response = await API.sendCommand(window.did, playModes.value[newMode].cmd);
                             if (response.ret === 'OK') {
                                 currentPlayMode.value = newMode;
                                 localStorage.setItem('play_mode', newMode.toString());
-                                showMessage(`已切换到${playModes.value[newMode].cmd}模式`, 'alert-info');
+                                showMessage(`已切換到${playModes.value[newMode].label}模式`, 'alert-info');
                             }
                         }
                     } catch (error) {
                         console.error('Error toggling play mode:', error);
-                        showMessage('切换播放模式失败，请重试', 'alert-error');
+                        showMessage('切換播放模式失敗，請重試', 'alert-error');
                     }
                 };
 
@@ -1184,12 +1203,12 @@
                         // 获取音乐列表数据
                         const data = await API.getMusicList();
 
-                        // 设置播放列表数据
+                        // 設置播放列表數據
                         playlists.value = [
-                            { id: 1, name: '所有歌曲', count: data['所有歌曲']?.length || 0, active: true },
-                            { id: 2, name: '收藏', count: data['收藏']?.length || 0, active: false },
-                            { id: 3, name: '最近新增', count: data['最近新增']?.length || 0, active: false },
-                            { id: 4, name: '下载', count: data['下载']?.length || 0, active: false }
+                            { id: 1, name: '所有歌曲', displayName: '所有歌曲', count: data['所有歌曲']?.length || 0, active: true },
+                            { id: 2, name: '收藏', displayName: '收藏', count: data['收藏']?.length || 0, active: false },
+                            { id: 3, name: '最近新增', displayName: '最近新增', count: data['最近新增']?.length || 0, active: false },
+                            { id: 4, name: '下载', displayName: '下載', count: data['下载']?.length || 0, active: false }
                         ];
 
                         // 设置歌曲列表数据，不再单独获取每首歌的信息
@@ -1198,7 +1217,7 @@
                             id: songName,
                             title: songName,
                             artist: '未知歌手',
-                            album: '未知专辑',
+                            album: '未知專輯',
                             duration: '0:00',
                             cover: '/static/xiaoai.png',
                             url: '',
@@ -1272,7 +1291,7 @@
                 // 修改 deleteMusic 方法
                 const deleteMusic = async (song) => {
                     try {
-                        if (!confirm(`确定要删除歌曲"${song.id}"吗？`)) {
+                        if (!confirm(`確定要刪除歌曲"${song.id}"嗎？`)) {
                             return;
                         }
 
@@ -1299,17 +1318,17 @@
                                 favoriteList.value = favoriteList.value.filter(name => name !== song.id);
                             }
 
-                            // 刷新歌单信息
+                            // 刷新歌單信息
                             await loadPlaylists();
 
-                            // 显示成功通知
-                            showMessage(`删除歌曲"${song.id}"成功`, 'alert-success');
+                            // 顯示成功通知
+                            showMessage(`刪除歌曲"${song.id}"成功`, 'alert-success');
                         } else {
-                            throw new Error(typeof data === 'string' ? data : (data.msg || '删除失败'));
+                            throw new Error(typeof data === 'string' ? data : (data.msg || '刪除失敗'));
                         }
                     } catch (error) {
                         console.error('Error deleting song:', error);
-                        showMessage(`删除失败: ${error.message}`, 'alert-error');
+                        showMessage(`刪除失敗: ${error.message}`, 'alert-error');
                     }
                 };
 
@@ -1382,10 +1401,10 @@
                                 currentTime.value = 0;
                             }
                         }
-                        showMessage('已发送停止播放的请求', 'alert-info');
+                        showMessage('已發送停止播放的請求', 'alert-info');
                     } catch (error) {
                         console.error('Error stopping playback:', error);
-                        showMessage('停止播放失败，请重试', 'alert-error');
+                        showMessage('停止播放失敗，請重試', 'alert-error');
                     }
                 };
 

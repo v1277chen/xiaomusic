@@ -159,7 +159,7 @@ def keyword_detection(user_input, str_list, n):
     :param str_list: 候選列表
     :param n: 返回數量限制
     """
-    # 过滤包含关键字的字符串
+    # 過濾包含關鍵字的字符串
     matched, remains = [], []
     for item in str_list:
         if user_input in item:
@@ -173,11 +173,11 @@ def keyword_detection(user_input, str_list, n):
         reverse=True,  # 降序排序，越相似的越靠前
     )
 
-    # 如果 n 是 -1，如果 n 大于匹配的数量，返回所有匹配的结果
+    # 如果 n 是 -1，如果 n 大於匹配的數量，返回所有匹配的結果
     if n == -1 or n > len(matched):
         return matched, remains
 
-    # 选择前 n 个匹配的结果
+    # 選擇前 n 個匹配的結果
     remains = matched[n:] + remains
     return matched[:n], remains
 
@@ -209,7 +209,7 @@ def find_best_match(user_input, collection, cutoff=0.6, n=1, extra_search_index=
     if len(matches) >= n or extra_search_index is None:
         return cur_matched_collection[:n]
 
-    # 如果数量不满足，继续搜索
+    # 如果數量不滿足，繼續搜索
     lower_extra_search_index = {
         traditional_to_simple(k.lower()): v
         for k, v in extra_search_index.items()
@@ -228,7 +228,7 @@ def custom_sort_key(s):
     優先識別字符串中的數字部分進行數值排序，而不是純字典序
     例如： "10.mp3" 應該排在 "2.mp3" 後面
     """
-    # 使用正则表达式分别提取字符串的数字前缀和数字后缀
+    # 使用正則表達式分別提取字符串的數字前綴和數字後綴
     prefix_match = re.match(r"^(\d+)", s)
     suffix_match = re.search(r"(\d+)$", s)
 
@@ -236,13 +236,13 @@ def custom_sort_key(s):
     numeric_suffix = int(suffix_match.group(0)) if suffix_match else None
 
     if numeric_prefix is not None:
-        # 如果前缀是数字，先按前缀数字排序，再按整个字符串排序
+        # 如果前綴是數字，先按前綴數字排序，再按整個字符串排序
         return (0, numeric_prefix, s)
     elif numeric_suffix is not None:
-        # 如果后缀是数字，先按前缀字符排序，再按后缀数字排序
+        # 如果後綴是數字，先按前綴字符排序，再按後綴數字排序
         return (1, s[: suffix_match.start()], numeric_suffix)
     else:
-        # 如果前缀和后缀都不是数字，按字典序排序
+        # 如果前綴和後綴都不是數字，按字典序排序
         return (2, s)
 
 
@@ -251,7 +251,7 @@ def _get_depth_path(root, directory, depth):
     根據設定的掃描深度，截取目錄路徑
     防止掃描過深的目錄結構
     """
-    # 计算当前目录的深度
+    # 計算當前目錄的深度
     relative_path = root[len(directory) :].strip(os.sep)
     path_parts = relative_path.split(os.sep)
     if len(path_parts) >= depth:
@@ -273,10 +273,10 @@ def _append_files_result(result, root, joinpath, files, support_extension):
     if dir_name not in result:
         result[dir_name] = []
     for file in files:
-        # 过滤隐藏文件
+        # 過濾隱藏文件
         if file.startswith("."):
             continue
-        # 过滤文件后缀
+        # 過濾文件後綴
         (name, extension) = os.path.splitext(file)
         if extension.lower() not in support_extension:
             continue
@@ -295,10 +295,10 @@ def traverse_music_directory(directory, depth, exclude_dirs, support_extension):
     """
     result = {}
     for root, dirs, files in os.walk(directory, followlinks=True):
-        # 忽略排除的目录
+        # 忽略排除的目錄
         dirs[:] = [d for d in dirs if d not in exclude_dirs]
 
-        # 计算当前目录的深度
+        # 計算當前目錄的深度
         current_depth = root[len(directory) :].count(os.sep) + 1
         if current_depth > depth:
             depth_path = _get_depth_path(root, directory, depth - 1)
@@ -347,17 +347,17 @@ async def downloadfile(url):
         raise Warning(
             f"Invalid URL scheme: {parsed_url.scheme}. Only HTTP and HTTPS are allowed."
         )
-    # 构建目标URL
+    # 構建目標URL
     cleaned_url = parsed_url.geturl()
 
-    # 使用 aiohttp 创建一个客户端会话来发起请求
+    # 使用 aiohttp 創建一個客戶端會話來發起請求
     async with aiohttp.ClientSession() as session:
         async with session.get(
             cleaned_url, timeout=5
-        ) as response:  # 增加超时以避免长时间挂起
-            # 如果响应不是200，引发异常
+        ) as response:  # 增加超時以避免長時間掛起
+            # 如果響應不是200，引發異常
             response.raise_for_status()
-            # 读取响应文本
+            # 讀取響應文本
             text = await response.text()
             return text
 
@@ -391,25 +391,25 @@ async def _get_web_music_duration(session, url, config, start=0, end=500):
     :return: 返回音頻的持續時間（秒），如果失敗則返回 0
     """
     duration = 0
-    # 设置请求头 Range，只请求部分内容（用于快速获取元数据）
+    # 設置請求頭 Range，只請求部分內容（用於快速獲取元數據）
     headers = {"Range": f"bytes={start}-{end}"}
 
-    # 使用 aiohttp 异步发起 GET 请求，获取部分音频内容
+    # 使用 aiohttp 異步發起 GET 請求，獲取部分音頻內容
     async with session.get(url, headers=headers) as response:
-        array_buffer = await response.read()  # 读取响应的二进制内容
+        array_buffer = await response.read()  # 讀取響應的二進制內容
 
-    # 创建一个命名的临时文件，并禁用自动删除（以便后续读取）
+    # 創建一個命名的臨時文件，並禁用自動刪除（以便後續讀取）
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
-        tmp.write(array_buffer)  # 将下载的部分内容写入临时文件
-        tmp_path = tmp.name  # 获取该临时文件的真实路径
+        tmp.write(array_buffer)  # 將下載的部分內容寫入臨時文件
+        tmp_path = tmp.name  # 獲取該臨時文件的真實路徑
 
     try:
-        # 调用 get_local_music_duration 并传入文件路径，而不是文件对象
+        # 調用 get_local_music_duration 並傳入文件路徑，而不是文件對象
         duration = await get_local_music_duration(tmp_path, config)
     except Exception as e:
         log.error(f"Error _get_web_music_duration: {e}")
     finally:
-        # 手动删除临时文件，避免残留
+        # 手動刪除臨時文件，避免殘留
         os.unlink(tmp_path)
 
     return duration
@@ -437,7 +437,7 @@ async def get_web_music_duration(url, config):
                     },
                 ) as response:
                     url = str(response.url)
-        # 设置总超时时间为3秒
+        # 設置總超時時間為3秒
         timeout = aiohttp.ClientTimeout(total=3)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             duration = await _get_web_music_duration(
@@ -493,23 +493,23 @@ def get_duration_by_ffprobe(file_path, ffmpeg_location):
     """使用系統安裝的 ffprobe 命令行工具獲取時長"""
     duration = 0
     try:
-        # 构造 ffprobe 命令参数
+        # 構造 ffprobe 命令參數
         cmd_args = [
             os.path.join(ffmpeg_location, "ffprobe"),
             "-v",
-            "error",  # 只输出错误信息，避免混杂在其他输出中
+            "error",  # 只輸出錯誤信息，避免混雜在其他輸出中
             "-show_entries",
-            "format=duration",  # 仅显示时长
+            "format=duration",  # 僅顯示時長
             "-of",
-            "json",  # 以 JSON 格式输出
+            "json",  # 以 JSON 格式輸出
             file_path,
         ]
 
-        # 输出待执行的完整命令
+        # 輸出待執行的完整命令
         full_command = " ".join(cmd_args)
         log.info(f"待執行及其完整命令 ffprobe command: {full_command}")
 
-        # 使用 ffprobe 获取文件的元数据，并以 JSON 格式输出
+        # 使用 ffprobe 獲取文件的元數據，並以 JSON 格式輸出
         result = subprocess.run(
             cmd_args,
             stdout=subprocess.PIPE,
@@ -557,14 +557,14 @@ def deepcopy_data_no_sensitive_info(data, fields_to_anonymize=None):
 
     copy_data = copy.deepcopy(data)
 
-    # 检查copy_data是否是字典或具有属性的对象
+    # 檢查copy_data是否是字典或具有屬性的對象
     if isinstance(copy_data, dict):
-        # 对字典进行处理
+        # 對字典進行處理
         for field in fields_to_anonymize:
             if field in copy_data:
                 copy_data[field] = "******"
     else:
-        # 对对象进行处理
+        # 對對象進行處理
         for field in fields_to_anonymize:
             if hasattr(copy_data, field):
                 setattr(copy_data, field, "******")
@@ -606,7 +606,7 @@ def remove_id3_tags(input_file: str, config) -> str:
     """
     audio = MP3(input_file, ID3=ID3)
 
-    # 检查是否存在ID3 v2.3或v2.4标签
+    # 檢查是否存在ID3 v2.3或v2.4標籤
     if not (
         audio.tags
         and (audio.tags.version == (2, 3, 0) or audio.tags.version == (2, 4, 0))
@@ -616,30 +616,30 @@ def remove_id3_tags(input_file: str, config) -> str:
     music_path = config.music_path
     temp_dir = config.temp_dir
 
-    # 构造新文件的路径
+    # 構造新文件的路徑
     out_file_name = os.path.splitext(os.path.basename(input_file))[0]
     out_file_path = os.path.join(temp_dir, f"{out_file_name}.mp3")
     relative_path = os.path.relpath(out_file_path, music_path)
 
-    # 路径相同的情况
+    # 路徑相同的情況
     input_absolute_path = os.path.abspath(input_file)
     output_absolute_path = os.path.abspath(out_file_path)
     if input_absolute_path == output_absolute_path:
         log.info(f"File {input_file} = {out_file_path} . Skipping remove_id3_tags.")
         return None
 
-    # 检查目标文件是否存在
+    # 檢查目標文件是否存在
     if os.path.exists(out_file_path):
         log.info(f"File {out_file_path} already exists. Skipping remove_id3_tags.")
         return relative_path
 
-    # 开始去除（不再需要检查）
-    # 拷贝文件
+    # 開始去除（不再需要檢查）
+    # 拷貝文件
     shutil.copy(input_file, out_file_path)
     outaudio = MP3(out_file_path, ID3=ID3)
-    # 删除ID3标签
+    # 刪除ID3標籤
     outaudio.delete()
-    # 保存修改后的文件
+    # 保存修改後的文件
     outaudio.save(padding=no_padding)
     log.info(f"File {out_file_path} remove_id3_tags ok.")
     return relative_path
@@ -657,7 +657,7 @@ def convert_file_to_mp3(input_file: str, config) -> str:
     out_file_path = os.path.join(temp_dir, f"{out_file_name}.mp3")
     relative_path = os.path.relpath(out_file_path, music_path)
 
-    # 路径相同的情况
+    # 路徑相同的情況
     input_absolute_path = os.path.abspath(input_file)
     output_absolute_path = os.path.abspath(out_file_path)
     if input_absolute_path == output_absolute_path:
@@ -669,12 +669,12 @@ def convert_file_to_mp3(input_file: str, config) -> str:
         log.error(f"Invalid input file path: {input_file}")
         return None
 
-    # 检查目标文件是否存在
+    # 檢查目標文件是否存在
     if os.path.exists(out_file_path):
         log.info(f"File {out_file_path} already exists. Skipping convert_file_to_mp3.")
         return relative_path
 
-    # 检查是否存在 loudnorm 参数
+    # 檢查是否存在 loudnorm 參數
     loudnorm_args = []
     if config.loudnorm:
         loudnorm_args = ["-af", config.loudnorm]
@@ -728,11 +728,11 @@ def chinese_to_number(chinese):
     result = 0
     unit = 1
     num = 0
-    # 处理特殊情况：以"十"开头时，在前面加"一"
+    # 處理特殊情況：以"十"開頭時，在前面加"一"
     if chinese.startswith("十"):
         chinese = "一" + chinese
 
-    # 如果只有一个字符且是单位，直接返回其值
+    # 如果只有一個字符且是單位，直接返回其值
     if len(chinese) == 1 and chinese_to_arabic[chinese] >= 10:
         return chinese_to_arabic[chinese]
     for char in reversed(chinese):
@@ -856,13 +856,13 @@ def _save_picture(picture_data, save_root, file_path):
     會根據 file_path 的哈希值創建子目錄，避免單個目錄文件過多
     並調用 _resize_save_image 進行縮放保存
     """
-    # 计算文件名的哈希值
+    # 計算文件名的哈希值
     file_hash = hashlib.md5(file_path.encode("utf-8")).hexdigest()
-    # 创建目录结构
+    # 創建目錄結構
     dir_path = os.path.join(save_root, file_hash[-6:])
     os.makedirs(dir_path, exist_ok=True)
 
-    # 保存图片
+    # 保存圖片
     filename = os.path.basename(file_path)
     (name, _) = os.path.splitext(filename)
     picture_path = os.path.join(dir_path, f"{name}.jpg")
@@ -879,7 +879,7 @@ def _resize_save_image(image_bytes, save_path, max_size=300):
     縮放並保存圖片
     將圖片限制在 max_size * max_size 範圍內，轉為 JPEG 格式以節省空間
     """
-    # 将 bytes 转换为 PIL Image 对象
+    # 將 bytes 轉換為 PIL Image 對象
     image = None
     try:
         image = Image.open(io.BytesIO(image_bytes))
@@ -888,18 +888,18 @@ def _resize_save_image(image_bytes, save_path, max_size=300):
         log.warning(f"Error _resize_save_image: {e}")
         return
 
-    # 获取原始尺寸
+    # 獲取原始尺寸
     original_width, original_height = image.size
 
-    # 如果图片的宽度和高度都小于 max_size，则直接保存原始图片
+    # 如果圖片的寬度和高度都小於 max_size，則直接保存原始圖片
     if original_width <= max_size and original_height <= max_size:
         image.save(save_path, format="JPEG")
         return
 
-    # 计算缩放比例，保持等比缩放
+    # 計算縮放比例，保持等比縮放
     scaling_factor = min(max_size / original_width, max_size / original_height)
 
-    # 计算新的尺寸
+    # 計算新的尺寸
     new_width = int(original_width * scaling_factor)
     new_height = int(original_height * scaling_factor)
 
@@ -1043,11 +1043,11 @@ def _set_mp3_tags(audio, info):
     audio["TDRC"] = TDRC(encoding=3, text=info.year)
     audio["TCON"] = TCON(encoding=3, text=info.genre)
 
-    # 使用 USLT 存储歌词
+    # 使用 USLT 存儲歌詞
     if info.lyrics:
         audio["USLT"] = USLT(encoding=3, lang="eng", text=info.lyrics)
 
-    # 添加封面图片
+    # 添加封面圖片
     if info.picture:
         with open(info.picture, "rb") as img_file:
             image_data = img_file.read()
@@ -1118,7 +1118,7 @@ async def check_bili_fav_list(url):
     bvid_info = {}
     parsed_url = urlparse(url)
     path = parsed_url.path
-    # 提取查询参数
+    # 提取查詢參數
     query_params = parse_qs(parsed_url.query)
     if parsed_url.hostname == "space.bilibili.com":
         if "/favlist" in path:
@@ -1129,7 +1129,7 @@ async def check_bili_fav_list(url):
             elif type == "21":
                 type = "collect"
             else:
-                raise ValueError("当前只支持合集和收藏夹")
+                raise ValueError("當前只支持合集和收藏夾")
         elif "/lists/" in path:
             parts = path.split("/")
             if len(parts) >= 4 and "?" in url:
@@ -1184,11 +1184,11 @@ async def check_bili_fav_list(url):
                             break
                         page_num += 1
             else:
-                raise ValueError("当前只支持合集和收藏夹")
+                raise ValueError("當前只支持合集和收藏夾")
     return bvid_info
 
 
-# 下载播放列表
+# 下載播放列表
 async def download_playlist(config, url, dirname):
     title = f"{dirname}/%(title)s.%(ext)s"
     sbp_args = (
@@ -1224,7 +1224,7 @@ async def download_playlist(config, url, dirname):
     return download_proc
 
 
-# 下载一首歌曲
+# 下載一首歌曲
 async def download_one_music(config, url, name=""):
     title = "%(title)s.%(ext)s"
     if name:
@@ -1266,12 +1266,12 @@ def _longest_common_prefix(file_names):
     if not file_names:
         return ""
 
-    # 将第一个文件名作为初始前缀
+    # 將第一個文件名作為初始前綴
     prefix = file_names[0]
 
     for file_name in file_names[1:]:
         while not file_name.startswith(prefix):
-            # 如果当前文件名不以prefix开头，则缩短prefix
+            # 如果當前文件名不以prefix開頭，則縮短prefix
             prefix = prefix[:-1]
             if not prefix:
                 return ""
@@ -1289,11 +1289,11 @@ def safe_join_path(safe_root, directory):
     return normalized_directory
 
 
-# 移除目录下文件名前缀相同的
+# 移除目錄下文件名前綴相同的
 def remove_common_prefix(directory):
     files = os.listdir(directory)
 
-    # 获取所有文件的前缀
+    # 獲取所有文件的前綴
     common_prefix = _longest_common_prefix(files)
 
     log.info(f'Common prefix identified: "{common_prefix}"')
@@ -1302,9 +1302,9 @@ def remove_common_prefix(directory):
     for filename in files:
         if filename == common_prefix:
             continue
-        # 检查文件名是否以共同前缀开头
+        # 檢查文件名是否以共同前綴開頭
         if filename.startswith(common_prefix):
-            # 构造新的文件名
+            # 構造新的文件名
             new_filename = filename[len(common_prefix) :]
             match = pattern.search(new_filename.strip())
             if match:
@@ -1312,7 +1312,7 @@ def remove_common_prefix(directory):
                 name = match.group(2).replace(".", " ").strip()
                 suffix = match.group(3)
                 new_filename = f"{num}.{name}.{suffix}"
-            # 生成完整的文件路径
+            # 生成完整的文件路徑
             old_file_path = os.path.join(directory, filename)
             new_file_path = os.path.join(directory, new_filename)
 
@@ -1350,16 +1350,16 @@ def try_add_access_control_param(config, url):
     return new_url
 
 
-# 判断文件在不在排除目录列表
+# 判斷文件在不在排除目錄列表
 def not_in_dirs(filename, ignore_absolute_dirs):
     file_absolute_path = os.path.abspath(filename)
     file_dir = os.path.dirname(file_absolute_path)
     for ignore_dir in ignore_absolute_dirs:
         if file_dir.startswith(ignore_dir):
             log.info(f"{file_dir} in {ignore_dir}")
-            return False  # 文件在排除目录中
+            return False  # 文件在排除目錄中
 
-    return True  # 文件不在排除目录中
+    return True  # 文件不在排除目錄中
 
 
 def is_docker():
@@ -1367,7 +1367,7 @@ def is_docker():
 
 
 async def restart_xiaomusic():
-    # 重启 xiaomusic 程序
+    # 重啟 xiaomusic 程序
     sbp_args = (
         "supervisorctl",
         "restart",
@@ -1378,14 +1378,14 @@ async def restart_xiaomusic():
     log.info(f"restart_xiaomusic: {cmd}")
     await asyncio.sleep(2)
     proc = await asyncio.create_subprocess_exec(*sbp_args)
-    exit_code = await proc.wait()  # 等待子进程完成
+    exit_code = await proc.wait()  # 等待子進程完成
     log.info(f"restart_xiaomusic completed with exit code {exit_code}")
     return exit_code
 
 
 async def update_version(version: str, lite: bool = True):
     if not is_docker():
-        ret = "xiaomusic 更新只能在 docker 中进行"
+        ret = "xiaomusic 更新只能在 docker 中進行"
         log.info(ret)
         return ret
     lite_tag = ""
@@ -1403,7 +1403,7 @@ async def update_version(version: str, lite: bool = True):
 
 def get_os_architecture():
     """
-    获取操作系统架构类型：amd64、arm64、arm-v7。
+    獲取操作系統架構類型：amd64、arm64、arm-v7。
 
     Returns:
         str: 架构类型
@@ -1422,10 +1422,10 @@ def get_os_architecture():
 
 async def download_and_extract(url: str, target_directory: str):
     ret = "OK"
-    # 创建目标目录
+    # 創建目標目錄
     os.makedirs(target_directory, exist_ok=True)
 
-    # 使用 aiohttp 异步下载文件
+    # 使用 aiohttp 異步下載文件
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
@@ -1435,30 +1435,30 @@ async def download_and_extract(url: str, target_directory: str):
                     log.warning(f"Invalid file path: {file_name}")
                     return
                 with open(file_name, "wb") as f:
-                    # 以块的方式下载文件，防止内存占用过大
+                    # 以塊的方式下載文件，防止內存佔用過大
                     async for chunk in response.content.iter_any():
                         f.write(chunk)
-                log.info(f"文件下载完成: {file_name}")
+                log.info(f"文件下載完成: {file_name}")
 
                 # 解压下载的文件
                 if file_name.endswith(".tar.gz"):
                     await extract_tar_gz(file_name, target_directory)
                 else:
-                    ret = f"下载失败, 包有问题: {file_name}"
+                    ret = f"下載失敗, 包有問題: {file_name}"
                 log.warning(ret)
 
             else:
-                ret = f"下载失败, 状态码: {response.status}"
+                ret = f"下載失敗, 狀態碼: {response.status}"
                 log.warning(ret)
     return ret
 
 
 async def extract_tar_gz(file_name: str, target_directory: str):
-    # 使用 asyncio.create_subprocess_exec 执行 tar 解压命令
+    # 使用 asyncio.create_subprocess_exec 執行 tar 解壓命令
     command = ["tar", "-xzvf", file_name, "-C", target_directory]
-    # 启动子进程执行解压命令
+    # 啟動子進程執行解壓命令
     await asyncio.create_subprocess_exec(*command)
-    # 不等待子进程完成
+    # 不等待子進程完成
     log.info(f"extract_tar_gz ing {file_name}")
 
 
@@ -1470,10 +1470,10 @@ def chmodfile(file_path: str):
 
 
 def chmoddir(dir_path: str):
-    # 获取指定目录下的所有文件和子目录
+    # 獲取指定目錄下的所有文件和子目錄
     for item in os.listdir(dir_path):
         item_path = os.path.join(dir_path, item)
-        # 确保是文件，且不是目录
+        # 確保是文件，且不是目錄
         if os.path.isfile(item_path):
             try:
                 os.chmod(item_path, 0o775)
@@ -1487,25 +1487,25 @@ async def fetch_json_get(url, headers, config):
     proxy = None
     if config and config.proxy:
         connector = aiohttp.TCPConnector(
-            ssl=False,  # 如需验证SSL证书，可改为True（需确保代理支持）
+            ssl=False,  # 如需驗證SSL證書，可改為True（需確保代理支持）
             limit=10,
         )
         proxy = config.proxy
     try:
-        # 2. 传入代理配置创建ClientSession
+        # 2. 傳入代理配置創建ClientSession
         async with aiohttp.ClientSession(connector=connector) as session:
-            # 3. 发起带代理的GET请求
+            # 3. 發起帶代理的GET請求
             async with session.get(
                 url,
                 headers=headers,
-                proxy=proxy,  # 传入格式化后的代理参数
-                timeout=10,  # 超时时间（秒），避免无限等待
+                proxy=proxy,  # 傳入格式化後的代理參數
+                timeout=10,  # 超時時間（秒），避免無限等待
             ) as response:
                 if response.status == 200:
                     data = await response.json()
                     log.info(f"fetch_json_get: {url} success {data}")
 
-                    # 确保返回结果为dict
+                    # 確保返回結果為dict
                     if isinstance(data, dict):
                         return data
                     else:
@@ -1524,7 +1524,7 @@ async def fetch_json_get(url, headers, config):
         log.error(f"Unexpected error fetching {url} (proxy: {proxy}): {e}")
         return {}
     finally:
-        # 4. 关闭连接器（避免资源泄漏）
+        # 4. 關閉連接器（避免資源洩漏）
         if connector and not connector.closed:
             await connector.close()
 
@@ -1536,15 +1536,15 @@ class LRUCache(OrderedDict):
 
     def __setitem__(self, key, value):
         if key in self:
-            # 移动到末尾(最近使用)
+            # 移動到末尾(最近使用)
             self.move_to_end(key)
         super().__setitem__(key, value)
-        # 如果超出大小限制,删除最早使用的项
+        # 如果超出大小限制,刪除最早使用的項
         if len(self) > self.max_size:
             self.popitem(last=False)
 
     def __getitem__(self, key):
-        # 访问时移动到末尾(最近使用)
+        # 訪問時移動到末尾(最近使用)
         if key in self:
             self.move_to_end(key)
         return super().__getitem__(key)
@@ -1557,29 +1557,29 @@ class MusicUrlCache:
         self.log = logging.getLogger(__name__)
 
     async def get(self, url: str, headers: dict = None, config=None) -> str:
-        """获取URL(优先从缓存获取,没有则请求API)
+        """獲取URL(優先從緩存獲取,沒有則請求API)
 
         Args:
             url: 原始URL
-            headers: API请求需要的headers
+            headers: API請求需要的headers
         Returns:
-            str: 真实播放URL
+            str: 真實播放URL
         """
-        # 先查询缓存
+        # 先查詢緩存
         cached_url = self._get_from_cache(url)
         if cached_url:
             self.log.info(f"Using cached url: {cached_url}")
             return cached_url
 
-        # 缓存未命中,请求API
+        # 緩存未命中,請求API
         return await self._fetch_from_api(url, headers, config)
 
     def _get_from_cache(self, url: str) -> str:
-        """从缓存中获取URL"""
+        """從緩存中獲取URL"""
         try:
             cached_url, expire_time = self.cache[url]
             if time.time() > expire_time:
-                # 缓存过期,删除
+                # 緩存過期,刪除
                 del self.cache[url]
                 return ""
             return cached_url
@@ -1587,7 +1587,7 @@ class MusicUrlCache:
             return ""
 
     async def _fetch_from_api(self, url: str, headers: dict = None, config=None) -> str:
-        """从API获取真实URL"""
+        """從API獲取真實URL"""
         data = await fetch_json_get(url, headers or {}, config)
 
         if not isinstance(data, dict):
@@ -1599,10 +1599,10 @@ class MusicUrlCache:
             self.log.error(f"No url in API response: {data}")
             return ""
 
-        # 获取过期时间
+        # 獲取過期時間
         expire_time = self._parse_expire_time(data)
 
-        # 缓存结果
+        # 緩存結果
         self._set_cache(url, real_url, expire_time)
         self.log.info(
             f"Cached url, expire_time: {expire_time}, cache size: {len(self.cache)}"
@@ -1610,7 +1610,7 @@ class MusicUrlCache:
         return real_url
 
     def _parse_expire_time(self, data: dict) -> float | None:
-        """解析API返回的过期时间"""
+        """解析API返回的過期時間"""
         try:
             extra = data.get("extra", {})
             expire_info = extra.get("expire", {})
@@ -1623,18 +1623,18 @@ class MusicUrlCache:
         return None
 
     def _set_cache(self, url: str, real_url: str, expire_time: float = None):
-        """设置缓存"""
+        """設置緩存"""
         if expire_time is None:
             expire_time = time.time() + (self.default_expire_days * 24 * 3600)
         self.cache[url] = (real_url, expire_time)
 
     def clear(self):
-        """清空缓存"""
+        """清空緩存"""
         self.cache.clear()
 
     @property
     def size(self) -> int:
-        """当前缓存大小"""
+        """當前緩存大小"""
         return len(self.cache)
 
 
@@ -1642,35 +1642,35 @@ async def text_to_mp3(
     text: str, save_dir: str, voice: str = "zh-CN-XiaoxiaoNeural"
 ) -> str:
     """
-    使用edge-tts将文本转换为MP3语音文件
+    使用edge-tts將文本轉換為MP3語音文件
 
     参数:
-        text: 需要转换的文本内容
-        save_dir: 保存MP3文件的目录路径
-        voice: 语音模型（默认中文晓晓）
+        text: 需要轉換的文本內容
+        save_dir: 保存MP3文件的目錄路徑
+        voice: 語音模型（默認中文曉曉）
 
     返回:
-        str: 生成的MP3文件完整路径
+        str: 生成的MP3文件完整路徑
     """
-    # 确保保存目录存在
+    # 確保保存目錄存在
     Path(save_dir).mkdir(parents=True, exist_ok=True)
 
-    # 基于文本和语音模型生成唯一文件名（避免相同文本不同语音重复）
+    # 基於文本和語音模型生成唯一文件名（避免相同文本不同語音重複）
     content = f"{text}_{voice}".encode()
     file_hash = hashlib.md5(content).hexdigest()
     mp3_filename = f"{file_hash}.mp3"
     mp3_path = os.path.join(save_dir, mp3_filename)
 
-    # 文件已存在直接返回路径
+    # 文件已存在直接返回路徑
     if os.path.exists(mp3_path):
         return mp3_path
 
-    # 调用edge-tts生成语音
+    # 調用edge-tts生成語音
     try:
         communicate = edge_tts.Communicate(text, voice)
         await communicate.save(mp3_path)
-        log.info(f"语音文件生成成功: {mp3_path}")
+        log.info(f"語音文件生成成功: {mp3_path}")
     except Exception as e:
-        raise RuntimeError(f"生成语音文件失败: {e}") from e
+        raise RuntimeError(f"生成語音文件失敗: {e}") from e
 
     return mp3_path

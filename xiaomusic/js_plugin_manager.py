@@ -26,7 +26,7 @@ class JSPluginManager:
         self.xiaomusic = xiaomusic
         base_path = self.xiaomusic.config.conf_path
         self.log = logging.getLogger(__name__)
-        # JS插件文件夹：
+        # JS插件文件夾：
         self.plugins_dir = os.path.join(base_path, "js_plugins")
         # 插件配置Json：
         self.plugins_config_path = os.path.join(base_path, "plugins-config.json")
@@ -38,13 +38,13 @@ class JSPluginManager:
         self.request_id = 0
         self.pending_requests = {}
 
-        # 启动 Node.js 子进程
+        # 啟動 Node.js 子進程
         self._start_node_process()
 
-        # 启动消息处理线程
+        # 啟動消息處理線程
         self._start_message_handler()
 
-        # 加载插件
+        # 加載插件
         self._load_plugins()
 
     def _start_node_process(self):
@@ -69,7 +69,7 @@ class JSPluginManager:
 
             self.log.info("Node.js process started successfully")
 
-            # 启动进程监控线程
+            # 啟動進程監控線程
             threading.Thread(target=self._monitor_node_process, daemon=True).start()
 
         except Exception as e:
@@ -109,7 +109,7 @@ class JSPluginManager:
                 time.sleep(0.1)
 
         def stderr_handler():
-            """处理 Node.js 进程的错误输出"""
+            """處理 Node.js 進程的錯誤輸出"""
             while True:
                 if self.node_process and self.node_process.stderr:
                     try:
@@ -151,11 +151,11 @@ class JSPluginManager:
             elif "musicItem" in message:
                 self.log.info(f"JS Plugin Manager music item: {message['musicItem']}")
 
-            # 发送消息 (JSON字符串 + 换行符)
+            # 發送消息 (JSON字符串 + 換行符)
             self.node_process.stdin.write(json.dumps(message) + "\n")
             self.node_process.stdin.flush()
 
-            # 等待响应
+            # 等待響應
             response = self._wait_for_response(message_id, timeout)
             self.log.info(
                 f"JS Plugin Manager received response for message {message_id}: {response.get('success', 'unknown')}"
@@ -163,7 +163,7 @@ class JSPluginManager:
             return response
 
     def _wait_for_response(self, message_id: str, timeout: int) -> dict[str, Any]:
-        """等待特定消息的响应"""
+        """等待特定消息的響應"""
         start_time = time.time()
 
         while time.time() - start_time < timeout:
@@ -175,13 +175,13 @@ class JSPluginManager:
         raise TimeoutError(f"Message {message_id} timeout")
 
     def _handle_response(self, response: dict[str, Any]):
-        """处理 Node.js 进程的响应"""
+        """處理 Node.js 進程的響應"""
         message_id = response.get("id")
         self.log.debug(
             f"JS Plugin Manager received raw response: {response}"
         )  # 添加原始响应日志
 
-        # 添加更严格的数据验证
+        # 添加更嚴格的數據驗證
         if not isinstance(response, dict):
             self.log.error(
                 f"JS Plugin Manager received invalid response type: {type(response)}, value: {response}"
@@ -194,18 +194,18 @@ class JSPluginManager:
             )
             return
 
-        # 确保 success 字段存在
+        # 確保 success 字段存在
         if "success" not in response:
             self.log.warning(
                 f"JS Plugin Manager received response without success field: {response}"
             )
             response["success"] = False
 
-        # 如果有 result 字段，验证其结构
+        # 如果有 result 字段，驗證其結構
         if "result" in response and response["result"] is not None:
             result = response["result"]
             if isinstance(result, dict):
-                # 对搜索结果进行特殊处理
+                # 對搜索結果進行特殊處理
                 if "data" in result and not isinstance(result["data"], list):
                     self.log.warning(
                         f"JS Plugin Manager received result with invalid data type: {type(result['data'])}, setting to empty list"
@@ -218,12 +218,12 @@ class JSPluginManager:
     """------------------------------开放接口相关函数----------------------------------------"""
 
     def get_openapi_info(self) -> dict[str, Any]:
-        """获取开放接口配置信息
+        """獲取開放接口配置信息
         Returns:
-            Dict[str, Any]: 包含 OpenAPI 配置信息的字典，包括启用状态和搜索 URL
+            Dict[str, Any]: 包含 OpenAPI 配置信息的字典，包括啟用狀態和搜索 URL
         """
         try:
-            # 读取配置文件中的 OpenAPI 配置信息
+            # 讀取配置文件中的 OpenAPI 配置信息
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
@@ -236,25 +236,25 @@ class JSPluginManager:
             return {}
 
     def toggle_openapi(self) -> dict[str, Any]:
-        """切换开放接口配置状态
-        Returns: 切换后的配置信息
+        """切換開放接口配置狀態
+        Returns: 切換後的配置信息
         """
         try:
-            # 读取配置文件中的 OpenAPI 配置信息
+            # 讀取配置文件中的 OpenAPI 配置信息
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                # 获取当前的 openapi_info 配置，如果没有则初始化
+                # 獲取當前的 openapi_info 配置，如果沒有則初始化
                 openapi_info = config_data.get("openapi_info", {})
 
-                # 切换启用状态：和当前状态取反
+                # 切換啟用狀態：和當前狀態取反
                 current_enabled = openapi_info.get("enabled", False)
                 openapi_info["enabled"] = not current_enabled
 
-                # 更新配置数据
+                # 更新配置數據
                 config_data["openapi_info"] = openapi_info
-                # 写回配置文件
+                # 寫回配置文件
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
                 return {"success": True}
@@ -262,30 +262,30 @@ class JSPluginManager:
                 return {"success": False}
         except Exception as e:
             self.log.error(f"Failed to toggle OpenAPI config: {e}")
-            # 出错时返回默认配置
+            # 出錯時返回默認配置
             return {"success": False, "error": str(e)}
 
     def update_openapi_url(self, openapi_url: str) -> dict[str, Any]:
-        """更新开放接口地址
-        Returns: 更新后的配置信息
+        """更新開放接口地址
+        Returns: 更新後的配置信息
         :type openapi_url: 新的接口地址
         """
         try:
-            # 读取配置文件中的 OpenAPI 配置信息
+            # 讀取配置文件中的 OpenAPI 配置信息
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
 
-                # 获取当前的 openapi_info 配置，如果没有则初始化
+                # 獲取當前的 openapi_info 配置，如果沒有則初始化
                 openapi_info = config_data.get("openapi_info", {})
 
-                # 切换启用状态：和当前状态取反
+                # 切換啟用狀態：和當前狀態取反
                 # current_url = openapi_info.get("search_url", "")
                 openapi_info["search_url"] = openapi_url
 
-                # 更新配置数据
+                # 更新配置數據
                 config_data["openapi_info"] = openapi_info
-                # 写回配置文件
+                # 寫回配置文件
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, ensure_ascii=False, indent=2)
                 return {"success": True}
@@ -299,13 +299,13 @@ class JSPluginManager:
     """----------------------------------------------------------------------"""
 
     def _load_plugins(self):
-        """加载所有插件"""
+        """加載所有插件"""
         if not os.path.exists(self.plugins_dir):
             os.makedirs(self.plugins_dir)
 
-        # 读取、加载插件配置Json
+        # 讀取、加載插件配置Json
         if not os.path.exists(self.plugins_config_path):
-            # 复制 plugins-config-example.json 模板，创建插件配置Json文件
+            # 複製 plugins-config-example.json 模板，創建插件配置Json文件
             example_config_path = os.path.join(
                 os.path.dirname(__file__), "plugins-config-example.json"
             )
@@ -321,18 +321,18 @@ class JSPluginManager:
                 }
                 with open(self.plugins_config_path, "w", encoding="utf-8") as f:
                     json.dump(base_config, f, ensure_ascii=False, indent=2)
-        # 输出文件夹、配置文件地址
+        # 輸出文件夾、配置文件地址
         self.log.info(f"Plugins directory: {self.plugins_dir}")
         self.log.info(f"Plugins config file: {self.plugins_config_path}")
-        # 只加载指定的插件，避免加载所有插件导致超时
-        # enabled_plugins = ['kw', 'qq-yuanli']  # 可以根据需要添加更多
-        # 读取配置文件配置
+        # 只加載指定的插件，避免加載所有插件導致超時
+        # enabled_plugins = ['kw', 'qq-yuanli']  # 可以根據需要添加更多
+        # 讀取配置文件配置
         enabled_plugins = self.get_enabled_plugins()
         for filename in os.listdir(self.plugins_dir):
             if filename.endswith(".js"):
                 try:
                     plugin_name = os.path.splitext(filename)[0]
-                    # 如果是重要插件或没有指定重要插件列表，则加载
+                    # 如果是重要插件或沒有指定重要插件列表，則加載
                     if not enabled_plugins or plugin_name in enabled_plugins:
                         try:
                             self.log.info(f"Loading plugin: {plugin_name}")
@@ -341,7 +341,7 @@ class JSPluginManager:
                             self.log.error(
                                 f"Failed to load important plugin {plugin_name}: {e}"
                             )
-                            # 即使加载失败也记录插件信息
+                            # 即使加載失敗也記錄插件信息
                             self.plugins[plugin_name] = {
                                 "name": plugin_name,
                                 "enabled": False,
@@ -352,7 +352,7 @@ class JSPluginManager:
                         self.log.debug(
                             f"Skipping plugin (not in important list): {plugin_name}"
                         )
-                        # 标记为未加载但可用
+                        # 標記為未加載但可用
                         self.plugins[plugin_name] = {
                             "name": plugin_name,
                             "enabled": False,
@@ -361,7 +361,7 @@ class JSPluginManager:
                         }
                 except Exception as e:
                     self.log.error(f"Failed to load plugin {filename}: {e}")
-                    # 即使加载失败也记录插件信息
+                    # 即使加載失敗也記錄插件信息
                     self.plugins[plugin_name] = {
                         "name": plugin_name,
                         "enabled": False,
@@ -370,7 +370,7 @@ class JSPluginManager:
                     }
 
     def load_plugin(self, plugin_name: str) -> bool:
-        """加载单个插件"""
+        """加載單個插件"""
         plugin_file = os.path.join(self.plugins_dir, f"{plugin_name}.js")
 
         if not os.path.exists(plugin_file):
@@ -403,21 +403,21 @@ class JSPluginManager:
             return False
 
     def get_plugin_list(self) -> list[dict[str, Any]]:
-        """获取启用的插件列表"""
+        """獲取啟用的插件列表"""
         result = []
         try:
-            # 读取配置文件中的启用插件列表
+            # 讀取配置文件中的啟用插件列表
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
                 plugin_infos = config_data.get("plugins_info", [])
                 enabled_plugins = config_data.get("enabled_plugins", [])
 
-                # 创建一个映射，用于快速查找插件在 enabled_plugins 中的位置
+                # 創建一個映射，用於快速查找插件在 enabled_plugins 中的位置
                 enabled_order = {name: i for i, name in enumerate(enabled_plugins)}
 
-                # 先按 enabled 属性排序（True 在前）
-                # 再按 enabled_plugins 顺序排序（启用的插件才参与此排序）
+                # 先按 enabled 屬性排序（True 在前）
+                # 再按 enabled_plugins 順序排序（啟用的插件才參與此排序）
                 def sort_key(plugin_info):
                     name = plugin_info["name"]
                     is_enabled = plugin_info.get("enabled", False)
@@ -426,8 +426,8 @@ class JSPluginManager:
                         if is_enabled
                         else len(enabled_plugins)
                     )
-                    # (-is_enabled) 将 True(1) 放到前面，False(0) 放到后面
-                    # order 控制启用插件间的相对顺序
+                    # (-is_enabled) 將 True(1) 放到前面，False(0) 放到後面
+                    # order 控制啟用插件間的相對順序
                     return -is_enabled, order
 
                 result = sorted(plugin_infos, key=sort_key)
@@ -436,9 +436,9 @@ class JSPluginManager:
         return result
 
     def get_enabled_plugins(self) -> list[str]:
-        """获取启用的插件列表"""
+        """獲取啟用的插件列表"""
         try:
-            # 读取配置文件中的启用插件列表
+            # 讀取配置文件中的啟用插件列表
             if os.path.exists(self.plugins_config_path):
                 with open(self.plugins_config_path, encoding="utf-8") as f:
                     config_data = json.load(f)
@@ -474,27 +474,27 @@ class JSPluginManager:
 
         self.log.debug(
             f"JS Plugin Manager search response: {response}"
-        )  # 使用 debug 级别，减少日志量
+        )  # 使用 debug 級別，減少日誌量
 
         if not response["success"]:
             self.log.error(
                 f"JS Plugin Manager search failed in plugin {plugin_name}: {response['error']}"
             )
-            # 添加详细的错误信息
+            # 添加詳細的錯誤信息
             self.log.error(f"JS Plugin Manager full error response: {response}")
             raise Exception(f"Search failed: {response['error']}")
         else:
-            # 检查返回的数据结构
+            # 檢查返回的數據結構
             result_data = response["result"]
             self.log.debug(
                 f"JS Plugin Manager search raw result: {result_data}"
-            )  # 使用 debug 级别
+            )  # 使用 debug 級別
             data_list = result_data.get("data", [])
             is_end = result_data.get("isEnd", True)
             self.log.info(
                 f"JS Plugin Manager search completed in plugin {plugin_name}, isEnd: {is_end}, found {len(data_list)} results"
             )
-            # 检查数据类型是否正确
+            # 檢查數據類型是否正確
             if not isinstance(data_list, list):
                 self.log.error(
                     f"JS Plugin Manager search returned invalid data type: {type(data_list)}, value: {data_list}"
@@ -518,37 +518,37 @@ class JSPluginManager:
         import aiohttp
 
         try:
-            # 如果关键词包含 '-'，则提取歌手名、歌名
+            # 如果關鍵詞包含 '-'，則提取歌手名、歌名
             if "-" in keyword:
                 parts = keyword.split("-")
                 keyword = parts[0]
                 artist = parts[1]
             else:
                 artist = ""
-            # 构造请求参数
+            # 構造請求參數
             params = {"type": "aggregateSearch", "keyword": keyword, "limit": limit}
-            # 使用aiohttp发起异步HTTP GET请求
+            # 使用aiohttp發起異步HTTP GET請求
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     url, params=params, timeout=aiohttp.ClientTimeout(total=10)
                 ) as response:
-                    response.raise_for_status()  # 抛出HTTP错误
-                    # 解析响应数据
+                    response.raise_for_status()  # 拋出HTTP錯誤
+                    # 解析響應數據
                     raw_data = await response.json()
 
-            self.log.info(f"在线接口返回Json: {raw_data}")
+            self.log.info(f"在線接口返回Json: {raw_data}")
 
-            # 检查API调用是否成功
+            # 檢查API調用是否成功
             if raw_data.get("code") != 200:
                 raise Exception(
                     f"API request failed with code: {raw_data.get('code', 'unknown')}"
                 )
 
-            # 提取实际的搜索结果
+            # 提取實際的搜索結果
             api_data = raw_data.get("data", {})
             results = api_data.get("results", [])
 
-            # 转换数据格式以匹配插件系统的期望格式
+            # 轉換數據格式以匹配插件系統的期望格式
             converted_data = []
             for item in results:
                 converted_item = {
@@ -563,9 +563,9 @@ class JSPluginManager:
                     "lrc": item.get("lrc", ""),
                 }
                 converted_data.append(converted_item)
-            # 排序筛选
+            # 排序篩選
             unified_result = {"data": converted_data}
-            # 调用优化函数
+            # 調用優化函數
             optimized_result = self.optimize_search_results(
                 unified_result,
                 search_keyword=keyword,
@@ -573,7 +573,7 @@ class JSPluginManager:
                 search_artist=artist,
             )
             results = optimized_result.get("data", [])
-            # 返回统一格式的数据
+            # 返回統一格式的數據
             return {
                 "success": True,
                 "data": results,
@@ -625,35 +625,35 @@ class JSPluginManager:
         if not result_data or "data" not in result_data or not result_data["data"]:
             return result_data
 
-        # 清理搜索关键词和歌手名，去除首尾空格
+        # 清理搜索關鍵詞和歌手名，去除首尾空格
         search_keyword = search_keyword.strip()
         search_artist = search_artist.strip()
 
-        # 如果关键词和歌手名都为空，则不进行排序
+        # 如果關鍵詞和歌手名都為空，則不進行排序
         if not search_keyword and not search_artist:
-            return result_data  # 两者都空才不排序
+            return result_data  # 兩者都空才不排序
 
-        # 获取待处理的数据列表
+        # 獲取待處理的數據列表
         data_list = result_data["data"]
         self.log.info(f"列表信息：：{data_list}")
-        # 预计算平台权重，启用插件列表中的前9个插件有权重，排名越靠前权重越高
+        # 預計算平台權重，啟用插件列表中的前9個插件有權重，排名越靠前權重越高
         enabled_plugins = self.get_enabled_plugins()
         plugin_weights = {p: 9 - i for i, p in enumerate(enabled_plugins[:9])}
 
         def calculate_match_score(item):
             """
-            计算单个搜索结果的匹配分数
-            参数:
-                item: 单个搜索结果项
+            計算單個搜索結果的匹配分數
+            參數:
+                item: 單個搜索結果項
             返回:
-                匹配分数，包含标题匹配分、艺术家匹配分和平台加分
+                匹配分數，包含標題匹配分、藝術家匹配分和平台加分
             """
-            # 获取并标准化标题、艺术家和平台信息
+            # 獲取並標準化標題、藝術家和平台信息
             title = item.get("title", "").lower()
             artist = item.get("artist", "").lower()
             platform = item.get("platform", "")
 
-            # 标准化搜索关键词和艺术家名
+            # 標準化搜索關鍵詞和藝術家名
             kw = search_keyword.lower()
             ar = search_artist.lower()
 
@@ -681,14 +681,14 @@ class JSPluginManager:
             return title_score + artist_score + platform_bonus
 
         sorted_data = sorted(data_list, key=calculate_match_score, reverse=True)
-        self.log.info(f"排序后列表信息：：{sorted_data}")
+        self.log.info(f"排序後列表信息：：{sorted_data}")
         if 0 < limit < len(sorted_data):
             sorted_data = sorted_data[:limit]
         result_data["data"] = sorted_data
         return result_data
 
     def get_media_source(self, plugin_name: str, music_item: dict[str, Any], quality):
-        """获取媒体源"""
+        """獲取媒體源"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
@@ -717,7 +717,7 @@ class JSPluginManager:
         return response["result"]
 
     def get_lyric(self, plugin_name: str, music_item: dict[str, Any]):
-        """获取歌词"""
+        """獲取歌詞"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
@@ -737,7 +737,7 @@ class JSPluginManager:
         return response["result"]
 
     def get_music_info(self, plugin_name: str, music_item: dict[str, Any]):
-        """获取音乐详情"""
+        """獲取音樂詳情"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
@@ -763,7 +763,7 @@ class JSPluginManager:
     def get_album_info(
         self, plugin_name: str, album_info: dict[str, Any], page: int = 1
     ):
-        """获取专辑详情"""
+        """獲取專輯詳情"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 
@@ -789,7 +789,7 @@ class JSPluginManager:
     def get_music_sheet_info(
         self, plugin_name: str, playlist_info: dict[str, Any], page: int = 1
     ):
-        """获取歌单详情"""
+        """獲取歌單詳情"""
         if plugin_name not in self.plugins:
             raise ValueError(f"Plugin {plugin_name} not found or not loaded")
 

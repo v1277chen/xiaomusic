@@ -23,18 +23,18 @@ def default_key_word_dict():
     return {
         "下一首": "play_next",             # 播放下一首
         "上一首": "play_prev",             # 播放上一首
-        "单曲循环": "set_play_type_one",   # 設置為單曲循環模式
-        "全部循环": "set_play_type_all",   # 設置為全部循環模式
-        "随机播放": "set_play_type_rnd",   # 設置為隨機播放模式
-        "单曲播放": "set_play_type_sin",   # 設置為單曲播放（播完停止）
-        "顺序播放": "set_play_type_seq",   # 設置為順序播放模式
-        "分钟后关机": "stop_after_minute",  # X分鐘後停止播放
+        "單曲循環": "set_play_type_one",   # 設置為單曲循環模式
+        "全部循環": "set_play_type_all",   # 設置為全部循環模式
+        "隨機播放": "set_play_type_rnd",   # 設置為隨機播放模式
+        "單曲播放": "set_play_type_sin",   # 設置為單曲播放（播完停止）
+        "順序播放": "set_play_type_seq",   # 設置為順序播放模式
+        "分鐘後關機": "stop_after_minute",  # X分鐘後停止播放
         "刷新列表": "gen_music_list",      # 重新掃描並生成音樂列表
         "加入收藏": "add_to_favorites",    # 將當前歌曲加入收藏
         "收藏歌曲": "add_to_favorites",    # 同上
         "取消收藏": "del_from_favorites",  # 將當前歌曲從收藏移除
         "播放列表第": "play_music_list_index", # 播放特定列表中的第 N 首
-        "删除歌曲": "cmd_del_music",       # 刪除當前播放的歌曲文件
+        "刪除歌曲": "cmd_del_music",       # 刪除當前播放的歌曲文件
     }
 
 
@@ -42,15 +42,15 @@ def default_key_word_dict():
 # 這裡展示了如何使用 exec# 指令來執行更複雜的操作
 def default_user_key_word_dict():
     return {
-        "测试自定义口令": 'exec#code1("hello")',  # 執行名為 code1 的自定義代碼片段
-        "测试链接": 'exec#httpget("https://github.com/hanxi/xiaomusic")', # 執行 HTTP GET 請求
+        "測試自定義口令": 'exec#code1("hello")',  # 執行名為 code1 的自定義代碼片段
+        "測試鏈接": 'exec#httpget("https://github.com/hanxi/xiaomusic")', # 執行 HTTP GET 請求
     }
 
 
 # 定義哪些指令的參數位於關鍵詞之前
 # 例如 "10分鐘後關機"，"10" 是參數，位於 "分鐘後關機" 之前
 KEY_WORD_ARG_BEFORE_DICT = {
-    "分钟后关机": True,
+    "分鐘後關機": True,
 }
 
 
@@ -58,22 +58,22 @@ KEY_WORD_ARG_BEFORE_DICT = {
 # 匹配時會按照列表順序進行遍歷，長度較長的關鍵詞通常應放在前面以避免誤匹配
 def default_key_match_order():
     return [
-        "分钟后关机",
+        "分鐘後關機",
         "下一首",
         "上一首",
-        "单曲循环",
-        "全部循环",
-        "随机播放",
-        "单曲播放",
-        "顺序播放",
-        "关机",
+        "單曲循環",
+        "全部循環",
+        "隨機播放",
+        "單曲播放",
+        "順序播放",
+        "關機",
         "刷新列表",
         "播放列表第",
         "播放列表",
         "加入收藏",
         "收藏歌曲",
         "取消收藏",
-        "删除歌曲",
+        "刪除歌曲",
     ]
 
 
@@ -183,7 +183,7 @@ class Config:
         os.getenv("XIAOMUSIC_ENABLE_FUZZY_MATCH", "true").lower() == "true"
     )
 
-    stop_tts_msg: str = os.getenv("XIAOMUSIC_STOP_TTS_MSG", "收到,再见") # 停止播放時的回覆語
+    stop_tts_msg: str = os.getenv("XIAOMUSIC_STOP_TTS_MSG", "收到,再見") # 停止播放時的回覆語
     enable_config_example: bool = False # 是否生成示例配置文件
 
     # 關鍵詞環境變量 (允許用戶自定義觸發詞)
@@ -195,10 +195,10 @@ class Config:
     )
     keywords_play: str = os.getenv("XIAOMUSIC_KEYWORDS_PLAY", "播放歌曲,放歌曲")
     keywords_search_play: str = os.getenv("XIAOMUSIC_KEYWORDS_SEARCH_PLAY", "搜索播放")
-    keywords_online_play: str = os.getenv("XIAOMUSIC_KEYWORDS_ONLINE_PLAY", "在线播放")
-    keywords_stop: str = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "关机,暂停,停止,停止播放")
+    keywords_online_play: str = os.getenv("XIAOMUSIC_KEYWORDS_ONLINE_PLAY", "在線播放")
+    keywords_stop: str = os.getenv("XIAOMUSIC_KEYWORDS_STOP", "關機,暫停,停止,停止播放")
     keywords_playlist: str = os.getenv(
-        "XIAOMUSIC_KEYWORDS_PLAYLIST", "播放列表,播放歌单"
+        "XIAOMUSIC_KEYWORDS_PLAYLIST", "播放列表,播放歌單"
     )
     user_key_word_dict: dict[str, str] = field(
         default_factory=default_user_key_word_dict
@@ -264,19 +264,19 @@ class Config:
 
     # 播放模式切換時的語音提示
     play_type_one_tts_msg: str = os.getenv(
-        "XIAOMUSIC_PLAY_TYPE_ONE_TTS_MSG", "已经设置为单曲循环"
+        "XIAOMUSIC_PLAY_TYPE_ONE_TTS_MSG", "已經設置為單曲循環"
     )
     play_type_all_tts_msg: str = os.getenv(
-        "XIAOMUSIC_PLAY_TYPE_ALL_TTS_MSG", "已经设置为全部循环"
+        "XIAOMUSIC_PLAY_TYPE_ALL_TTS_MSG", "已經設置為全部循環"
     )
     play_type_rnd_tts_msg: str = os.getenv(
-        "XIAOMUSIC_PLAY_TYPE_RND_TTS_MSG", "已经设置为随机播放"
+        "XIAOMUSIC_PLAY_TYPE_RND_TTS_MSG", "已經設置為隨機播放"
     )
     play_type_sin_tts_msg: str = os.getenv(
-        "XIAOMUSIC_PLAY_TYPE_SIN_TTS_MSG", "已经设置为单曲播放"
+        "XIAOMUSIC_PLAY_TYPE_SIN_TTS_MSG", "已經設置為單曲播放"
     )
     play_type_seq_tts_msg: str = os.getenv(
-        "XIAOMUSIC_PLAY_TYPE_SEQ_TTS_MSG", "已经设置为顺序播放"
+        "XIAOMUSIC_PLAY_TYPE_SEQ_TTS_MSG", "已經設置為順序播放"
     )
 
     recently_added_playlist_len: int = int(

@@ -5,7 +5,7 @@ from datetime import date
 
 log = logging.getLogger(__package__)
 
-# 用于存储已加载的年份数据
+# 用於存儲已加載的年份數據
 loaded_years = {}
 
 
@@ -32,11 +32,11 @@ def load_year_data(year):
                 day_info["date"]: day_info["isOffDay"]
                 for day_info in data.get("days", [])
             }
-        log.info(f"成功加载 {year} 年数据。")
-        log.debug(f"加载的日期数据: {loaded_years[year]}")
+        log.info(f"成功加載 {year} 年數據。")
+        log.debug(f"加載的日期數據: {loaded_years[year]}")
         return True
     except Exception as e:
-        log.error(f"加载 {year} 年数据失败: {e}")
+        log.error(f"加載 {year} 年數據失敗: {e}")
         return False
 
 
@@ -62,23 +62,23 @@ def is_off_day(year, month, day):
     優先級：法定配置 > 自然週末
     (例如某個週日因調休變為工作日，則配置文件中 isOffDay 為 False)
     """
-    # 检查日期有效性
+    # 檢查日期有效性
     if not is_valid_date(year, month, day):
-        log.warn(f"无效日期: {year}-{month:02d}-{day:02d}")
+        log.warn(f"無效日期: {year}-{month:02d}-{day:02d}")
         return None
 
-    # 加载年份数据
+    # 加載年份數據
     if not load_year_data(year):
         return None
 
     date_str = f"{year}-{month:02d}-{day:02d}"
 
-    # 检查是否为特殊日期
+    # 檢查是否為特殊日期
     special_day = loaded_years[year].get(date_str)
     if special_day is not None:
         return special_day
 
-    # 检查是否为周末
+    # 檢查是否為周末
     return is_weekend(year, month, day)
 
 

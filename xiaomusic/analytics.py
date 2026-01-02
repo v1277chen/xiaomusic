@@ -103,7 +103,7 @@ class Analytics:
                     "language": "zh-CN",
                     "referrer": "",
                     "screen": "430x932",
-                    "title": "后端统计",
+                    "title": "後端統計",
                     "url": "/backend",
                     "website": "7bfb0890-4115-4260-8892-b391513e7e99",
                     "name": event.get_event_name(),
@@ -127,15 +127,15 @@ class Analytics:
     def _get_user_agent(self):
         try:
             # 获取系统信息
-            os_name = platform.system()  # 操作系统名称，如 'Windows', 'Linux', 'Darwin'
-            os_version = platform.version()  # 操作系统版本号
+            os_name = platform.system()  # 操作系統名稱，如 'Windows', 'Linux', 'Darwin'
+            os_version = platform.version()  # 操作系統版本號
             architecture = "unknow"
             try:
                 architecture = platform.architecture()[0]  # '32bit' or '64bit'
             except Exception as e:
                 architecture = f"Error {e}"
                 pass
-            machine = platform.machine()  # 机器类型，如 'x86_64', 'arm64'
+            machine = platform.machine()  # 機器類型，如 'x86_64', 'arm64'
 
             # 获取 Python 版本信息
             python_version = platform.python_version()  # Python 版本
@@ -147,7 +147,7 @@ class Analytics:
                 f"Python/{python_version}"
             )
         except Exception as e:
-            # 获取报错的堆栈信息
+            # 獲取報錯的堆棧信息
             error_info = traceback.format_exc()
             user_agent = f"Error: {e} {error_info}"
 

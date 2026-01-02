@@ -7,23 +7,28 @@ let playModeIndex = 2;
 const playModes = {
   0: {
     icon: "repeat_one",
-    cmd: "单曲循环"
+    cmd: "单曲循环",
+    label: "單曲循環"
   },
   1: {
     icon: "repeat",
-    cmd: "全部循环"
+    cmd: "全部循环",
+    label: "全部循環"
   },
   2: {
     icon: "shuffle",
-    cmd: "随机播放"
+    cmd: "随机播放",
+    label: "隨機播放"
   },
   3: {
     icon: "looks_one",
-    cmd: "单曲播放"
+    cmd: "单曲播放",
+    label: "單曲播放"
   },
   4: {
     icon: "queue_music",
-    cmd: "顺序播放"
+    cmd: "顺序播放",
+    label: "順序播放"
   }
 };
 
@@ -63,7 +68,7 @@ function stopProgressUpdate() {
 }
 
 // 播放音乐
-window.playMusic = function(songName) {
+window.playMusic = function (songName) {
   const currentPlaylist = localStorage.getItem("cur_playlist");
   console.log(`播放音乐: ${songName}, 播放列表: ${currentPlaylist}`);
 
@@ -149,8 +154,8 @@ function do_play_music_list(listname, musicname) {
 function updatePlayingInfo(songName, isPlaying) {
   if (!songName) return;
 
-  // 更新播放栏信息
-  const displayText = isPlaying ? `【播放中】 ${songName}` : `【暂停中】 ${songName}`;
+  // 更新播放欄信息
+  const displayText = isPlaying ? `【播放中】 ${songName}` : `【暫停中】 ${songName}`;
   $("#playering-music").text(displayText);
   $("#playering-music-mobile").text(displayText);
 
@@ -184,7 +189,7 @@ function highlightPlayingSong(songName, isPlaying) {
   $(".play-icon").text("play_arrow");
 
   // 高亮当前歌曲，无论是播放还是暂停状态
-  $(".song-item").each(function() {
+  $(".song-item").each(function () {
     const itemSongName = $(this).find("h3").text();
     if (itemSongName === songName) {
       // 始终添加高亮背景
@@ -248,7 +253,7 @@ function nextTrack() {
 }
 
 function togglePlayMode(isSend = true) {
-  console.log('切换播放模式...');
+  console.log('切換播放模式...');
 
   // 从本地存储获取当前播放模式，如果没有则使用默认值2（随机播放）
   if (playModeIndex === undefined || playModeIndex === null) {
@@ -258,25 +263,25 @@ function togglePlayMode(isSend = true) {
   // 计算下一个播放模式索引：2 -> 3 -> 4 -> 2
   const nextModeIndex = playModeIndex >= 4 ? 2 : playModeIndex + 1;
 
-  // 获取下一个播放模式
+  // 獲取下一個播放模式
   const nextMode = playModes[nextModeIndex];
-  console.log('切换到播放模式:', nextModeIndex, nextMode.cmd);
+  console.log('切換到播放模式:', nextModeIndex, nextMode.cmd);
 
-  // 更新按钮图标和提示文本
+  // 更新按鈕圖標和提示文本
   const modeBtn = $("#modeBtn");
   const modeBtnIcon = modeBtn.find(".material-icons");
   const tooltip = modeBtn.find(".tooltip");
 
   modeBtnIcon.text(nextMode.icon);
-  tooltip.text(nextMode.cmd);
+  tooltip.text(nextMode.label || nextMode.cmd);
 
-  // 如果需要发送命令，则发送到设备
+  // 如果需要發送命令，則發送到設備
   if (isSend && window.did !== 'web_device') {
-    console.log('发送播放模式命令:', nextMode.cmd);
+    console.log('發送播放模式命令:', nextMode.cmd);
     sendcmd(nextMode.cmd);
   }
 
-  // 保存新的播放模式到本地存储和全局变量
+  // 保存新的播放模式到本地存儲和全局變量
   localStorage.setItem("playModeIndex", nextModeIndex);
   playModeIndex = nextModeIndex;
 }
@@ -288,7 +293,7 @@ function addToFavorites() {
   const isLiked = favoritelist.includes(currentSong);
   const cmd = isLiked ? "取消收藏" : "加入收藏";
 
-  // 发送收藏命令
+  // 發送收藏命令
   $.ajax({
     type: "POST",
     url: "/cmd",
@@ -313,13 +318,13 @@ function addToFavorites() {
         $(".favorite").addClass("favorite-active");
       }
 
-      // 如果当前在收藏列表页面，刷新列表
+      // 如果當前在收藏列表頁面，刷新列表
       if (localStorage.getItem("cur_playlist") === "收藏") {
         refresh_music_list();
       }
     },
     error: () => {
-      console.error(`${cmd}失败: ${currentSong}`);
+      console.error(`${cmd}失敗: ${currentSong}`);
     }
   });
 }
@@ -355,19 +360,19 @@ function toggleDelete() {
 }
 function confirmDelete() {
   var del_music_name = $("#music_name").val();
-  console.log(`删除歌曲 ${del_music_name}`);
-  $("#delete-component").hide(); // 隐藏删除框
+  console.log(`刪除歌曲 ${del_music_name}`);
+  $("#delete-component").hide(); // 隱藏刪除框
   $.ajax({
     type: "POST",
     url: "/delmusic",
     data: JSON.stringify({ name: del_music_name }),
     contentType: "application/json; charset=utf-8",
     success: () => {
-      alert(`删除 ${del_music_name} 成功`);
+      alert(`刪除 ${del_music_name} 成功`);
       refresh_music_list();
     },
     error: () => {
-      alert(`删除 ${del_music_name} 失败`);
+      alert(`刪除 ${del_music_name} 失敗`);
     },
   });
 }
@@ -456,7 +461,7 @@ function _refresh_music_list(callback) {
   $("#music_list").empty();
   $.get("/musiclist", function (data, status) {
     if (!data) {
-      console.error("未获取到音乐列表数据");
+      console.error("未獲取到音樂列表數據");
       return;
     }
 
@@ -474,7 +479,7 @@ function _refresh_music_list(callback) {
     renderAlbumList(data);
 
     // 获取当前播放列表
-    $.get(`/curplaylist?did=${window.did}`, function(playlist, status) {
+    $.get(`/curplaylist?did=${window.did}`, function (playlist, status) {
       if (playlist && playlist !== "") {
         localStorage.setItem("cur_playlist", playlist);
         showPlaylist(playlist);
@@ -501,10 +506,10 @@ function renderSystemPlaylists(data) {
   }
 
   const systemPlaylists = [
-    { name: '所有歌曲', icon: 'queue_music' },
-    { name: '收藏', icon: 'favorite' },
-    { name: '最近新增', icon: 'new_releases' },
-    { name: '下载', icon: 'download' }
+    { name: '所有歌曲', displayName: '所有歌曲', icon: 'queue_music' },
+    { name: '收藏', displayName: '收藏', icon: 'favorite' },
+    { name: '最近新增', displayName: '最近新增', icon: 'new_releases' },
+    { name: '下载', displayName: '下載', icon: 'download' }
   ];
 
   container.empty().addClass('flex flex-wrap gap-2');
@@ -525,20 +530,18 @@ function renderSystemPlaylists(data) {
     const button = $(`
       <button 
         onclick="showPlaylist('${playlist.name}')" 
-        class="flex items-center p-2 rounded-md transition-colors ${
-          isActive 
-            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-white'
-        }"
+        class="flex items-center p-2 rounded-md transition-colors ${isActive
+        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+        : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-white'
+      }"
       >
         <span class="material-icons">${playlist.icon}</span>
         <span class="ml-2 hidden md:inline">
-          ${playlist.name}
-          <span class="text-xs ${
-            isActive 
-              ? 'text-blue-500 dark:text-blue-400'
-              : 'text-gray-500 dark:text-gray-400'
-          }">(${count})</span>
+          ${playlist.displayName}
+          <span class="text-xs ${isActive
+        ? 'text-blue-500 dark:text-blue-400'
+        : 'text-gray-500 dark:text-gray-400'
+      }">(${count})</span>
         </span>
         ${isActive ? '<span class="material-icons ml-2 text-blue-500 text-sm hidden md:inline">check</span>' : ''}
       </button>
@@ -558,7 +561,7 @@ function renderAlbumList(data) {
 
   container.empty();
 
-  // 系统预设的播放列表，这些不在专辑列表中显示
+  // 系統預設的播放列表，這些不在專輯列表中顯示
   const systemPlaylists = [
     '收藏', '最近新增', '所有歌曲', '临时搜索列表',
     '所有电台', '全部', '下载', '其他'
@@ -583,24 +586,21 @@ function renderAlbumList(data) {
     const button = $(`
       <button 
         onclick="showPlaylist('${listName}')" 
-        class="w-full flex items-center space-x-3 p-2.5 rounded-md transition-colors group ${
-          isActive 
-            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-white'
-        }"
+        class="w-full flex items-center space-x-3 p-2.5 rounded-md transition-colors group ${isActive
+        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+        : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-white'
+      }"
       >
-        <span class="material-icons flex-shrink-0 ${
-          isActive 
-            ? 'text-blue-600 dark:text-blue-400'
-            : 'text-gray-500 dark:text-white'
-        }">album</span>
+        <span class="material-icons flex-shrink-0 ${isActive
+        ? 'text-blue-600 dark:text-blue-400'
+        : 'text-gray-500 dark:text-white'
+      }">album</span>
         <span class="min-w-0 flex-1 truncate text-left">
           ${listName}
-          <span class="text-xs ${
-            isActive 
-              ? 'text-blue-500 dark:text-blue-400'
-              : 'text-gray-500 dark:text-gray-400'
-          }">(${songs.length})</span>
+          <span class="text-xs ${isActive
+        ? 'text-blue-500 dark:text-blue-400'
+        : 'text-gray-500 dark:text-gray-400'
+      }">(${songs.length})</span>
         </span>
         ${isActive ? '<span class="material-icons flex-shrink-0 text-blue-500 text-sm">check</span>' : ''}
       </button>
@@ -611,7 +611,7 @@ function renderAlbumList(data) {
 }
 
 // 显示播放列表
-window.showPlaylist = function(listName) {
+window.showPlaylist = function (listName) {
   // 获取当前播放列表数据
   $.get("/musiclist", function (data, status) {
     if (!data || !data[listName]) {
@@ -637,8 +637,8 @@ window.showPlaylist = function(listName) {
 
 // 拉取播放列表
 function refresh_music_list() {
-  console.log("开始刷新音乐列表...");
-  // 刷新列表时清空并临时禁用搜索框
+  console.log("開始刷新音樂列表...");
+  // 刷新列表時清空並臨時禁用搜索框
   const searchInput = document.getElementById("search-input");
   if (!searchInput) {
     // console.error("未找到搜索输入框");
@@ -652,7 +652,7 @@ function refresh_music_list() {
   // 分发事件，让其他控件改变状态
   searchInput.dispatchEvent(inputEvent);
   searchInput.disabled = true;
-  searchInput.placeholder = "请等待...";
+  searchInput.placeholder = "請等待...";
 
   _refresh_music_list(() => {
     // 刷新完成再启用
@@ -822,7 +822,7 @@ function handleSearch() {
 }
 
 // 在文档加载完成后初始化搜索功能
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   handleSearch();
 });
 
@@ -892,7 +892,7 @@ function formatTime(seconds) {
 }
 
 // 停止播放
-window.stopPlay = function() {
+window.stopPlay = function () {
   const currentSong = localStorage.getItem("cur_music");
   if (!currentSong) return;
 
@@ -1104,7 +1104,7 @@ function initVolume() {
 $("#volume").off("change");
 
 // 添加新的音量事件监听器
-document.getElementById('volume-slider')?.addEventListener('input', function() {
+document.getElementById('volume-slider')?.addEventListener('input', function () {
   adjustVolume(this.value);
 });
 
@@ -1129,17 +1129,15 @@ function renderDeviceButtons(devices, currentDid) {
     const button = $(`
       <button 
         data-did="${device.did}" 
-        class="w-full flex items-center space-x-3 p-2.5 rounded-md transition-colors group ${
-          isActive 
-            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-white'
-        }"
+        class="w-full flex items-center space-x-3 p-2.5 rounded-md transition-colors group ${isActive
+        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+        : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-white'
+      }"
       >
-        <span class="material-icons flex-shrink-0 ${
-          isActive 
-            ? 'text-blue-600 dark:text-blue-400'
-            : 'text-gray-500 dark:text-white'
-        }">
+        <span class="material-icons flex-shrink-0 ${isActive
+        ? 'text-blue-600 dark:text-blue-400'
+        : 'text-gray-500 dark:text-white'
+      }">
           ${isActive ? 'speaker_group' : 'speaker'}
         </span>
         <span class="min-w-0 flex-1 truncate text-left">
@@ -1149,7 +1147,7 @@ function renderDeviceButtons(devices, currentDid) {
       </button>
     `);
 
-    button.click(function() {
+    button.click(function () {
       switchDevice(device.did);
     });
 
@@ -1161,17 +1159,15 @@ function renderDeviceButtons(devices, currentDid) {
   const webDeviceButton = $(`
     <button 
       data-did="web_device" 
-      class="w-full flex items-center space-x-3 p-2.5 rounded-md transition-colors group ${
-        isWebDevice 
-          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' 
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-white'
-      }"
+      class="w-full flex items-center space-x-3 p-2.5 rounded-md transition-colors group ${isWebDevice
+      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-white'
+    }"
     >
-      <span class="material-icons flex-shrink-0 ${
-        isWebDevice 
-          ? 'text-blue-600 dark:text-blue-400'
-          : 'text-gray-500 dark:text-white'
-      }">
+      <span class="material-icons flex-shrink-0 ${isWebDevice
+      ? 'text-blue-600 dark:text-blue-400'
+      : 'text-gray-500 dark:text-white'
+    }">
         ${isWebDevice ? 'computer' : 'desktop_windows'}
       </span>
       <span class="min-w-0 flex-1 truncate text-left">
@@ -1181,7 +1177,7 @@ function renderDeviceButtons(devices, currentDid) {
     </button>
   `);
 
-  webDeviceButton.click(function() {
+  webDeviceButton.click(function () {
     switchDevice('web_device');
   });
 
@@ -1195,7 +1191,7 @@ function showPlaylist(type) {
   // 添加当前按钮的活动状态
   $(`[data-playlist="${type}"]`).addClass('bg-blue-50 dark:bg-blue-900/20');
 
-  switch(type) {
+  switch (type) {
     case 'all':
       // 显示所有歌曲
       break;
@@ -1223,7 +1219,7 @@ window.initVolume = initVolume;
 let showDeleteButtons = false;
 
 // 切换删除按钮显示状态
-window.toggleDeleteButtons = function() {
+window.toggleDeleteButtons = function () {
   showDeleteButtons = !showDeleteButtons;
   // 更新所有删除按钮的显示状态
   $(".delete-button").toggleClass("hidden", !showDeleteButtons);
@@ -1245,10 +1241,9 @@ function renderSongList(songs) {
   songs.forEach(song => {
     const isCurrentSong = song === currentSong;
     const songItem = $(`
-      <div class="song-item flex items-center justify-between p-3 ${
-        isCurrentSong && isPlaying
-          ? 'bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400' 
-          : 'bg-gray-200 dark:bg-gray-800 dark:text-white'
+      <div class="song-item flex items-center justify-between p-3 ${isCurrentSong && isPlaying
+        ? 'bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400'
+        : 'bg-gray-200 dark:bg-gray-800 dark:text-white'
       } rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">
         <div class="flex items-center space-x-3 flex-1">
           <div class="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center flex-shrink-0">
@@ -1270,12 +1265,12 @@ function renderSongList(songs) {
     `);
 
     // 添加播放按钮点击事件
-    songItem.find('.play-button').on('click', function() {
+    songItem.find('.play-button').on('click', function () {
       playMusic(song);
     });
 
     // 添加删除按钮点击事件
-    songItem.find('.delete-button').on('click', function() {
+    songItem.find('.delete-button').on('click', function () {
       if (confirm(`确定要删除歌曲 "${song}" 吗？`)) {
         $.ajax({
           type: "POST",
@@ -1299,7 +1294,7 @@ function renderSongList(songs) {
 }
 
 // 播放音乐
-window.playMusic = function(songName) {
+window.playMusic = function (songName) {
   const currentPlaylist = localStorage.getItem("cur_playlist");
   console.log(`播放音乐: ${songName}, 播放列表: ${currentPlaylist}`);
 
@@ -1398,7 +1393,7 @@ function highlightPlayingSong(songName, isPlaying) {
   $(".play-icon").text("play_arrow");
 
   // 高亮当前歌曲，无论是播放还是暂停状态
-  $(".song-item").each(function() {
+  $(".song-item").each(function () {
     const itemSongName = $(this).find("h3").text();
     if (itemSongName === songName) {
       // 始终添加高亮背景
@@ -1410,7 +1405,7 @@ function highlightPlayingSong(songName, isPlaying) {
 }
 
 // 播放/暂停切换
-window.play = function() {
+window.play = function () {
   const currentSong = localStorage.getItem("cur_music");
   if (!currentSong) return;
 
@@ -1442,7 +1437,7 @@ window.play = function() {
 }
 
 // 停止播放
-window.stopPlay = function() {
+window.stopPlay = function () {
   const currentSong = localStorage.getItem("cur_music");
   if (!currentSong) return;
 
@@ -1467,7 +1462,7 @@ window.stopPlay = function() {
 }
 
 // 关机
-window.shutdown = function() {
+window.shutdown = function () {
   const currentSong = localStorage.getItem("cur_music");
   if (!currentSong) return;
 
@@ -1484,7 +1479,7 @@ window.shutdown = function() {
 }
 
 // 上一首
-window.prevTrack = function() {
+window.prevTrack = function () {
   if (window.did === 'web_device') {
     // Web播放模式的上一首逻辑
     const currentPlaylist = localStorage.getItem("cur_playlist");
@@ -1504,7 +1499,7 @@ window.prevTrack = function() {
 }
 
 // 下一首
-window.nextTrack = function() {
+window.nextTrack = function () {
   if (window.did === 'web_device') {
     // Web播放模式的下一首逻辑
     const currentPlaylist = localStorage.getItem("cur_playlist");
@@ -1524,7 +1519,7 @@ window.nextTrack = function() {
 }
 
 // 切换收藏状态
-window.toggleFavorite = function() {
+window.toggleFavorite = function () {
   const currentSong = document.getElementById('playering-music')?.textContent.replace('当前播放歌曲：', '').trim();
   if (!currentSong || currentSong === '无') return;
 

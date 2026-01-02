@@ -47,12 +47,12 @@ def main():
     parser.add_argument(
         "--port",
         dest="port",
-        help="监听端口",
+        help="監聽端口",
     )
     parser.add_argument(
         "--hardware",
         dest="hardware",
-        help="小爱音箱型号",
+        help="小愛音箱型號",
     )
     parser.add_argument(
         "--account",
@@ -89,7 +89,7 @@ def main():
     parser.add_argument(
         "--enable_config_example",
         dest="enable_config_example",
-        help="是否输出示例配置文件",
+        help="是否輸出示例配置文件",
         action="store_true",
     )
 
@@ -137,11 +137,11 @@ def main():
                 "handlers": [
                     "default",
                     "file",
-    # 设置默认音乐目录和配置目录
+    # 設置默認音樂目錄和配置目錄
     music_path = os.environ.get("XIAOMUSIC_MUSIC_PATH", "music")
     conf_path = os.environ.get("XIAOMUSIC_CONF_PATH", ".")
     
-    # 初始化配置对象
+    # 初始化配置對象
     config_obj = Config()
     config_obj.port = port
     config_obj.config_file = config
@@ -150,17 +150,17 @@ def main():
     config_obj.music_path = music_path
     config_obj.conf_path = conf_path
 
-    # 从文件加载配置，如果文件存在且有效
+    # 從文件加載配置，如果文件存在且有效
     try:
         config_obj.read_from_file(config_file=config)
     except Exception as e:
         print(f"Error loading config from file {config}: {e}")
         # Continue with default/CLI provided config if file loading fails
 
-    # 创建并运行 XiaoMusic 实例
+    # 創建並運行 XiaoMusic 實例
     xiaomusic = XiaoMusic(config_obj)
     
-    # 启动 HTTP 服务
+    # 啟動 HTTP 服務
     try:
         HttpInit(xiaomusic)
         uvicorn.run(
@@ -171,9 +171,9 @@ def main():
         )
     except Exception as e:
         print(f"Failed to start xiaomusic: {e}")
-        os._exit(0)  # 退出主进程
+        os._exit(0)  # 退出主進程
 
-    # 捕获主进程的退出信号
+    # 捕獲主進程的退出信號
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     run_server(port)

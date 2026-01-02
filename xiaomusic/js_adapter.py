@@ -33,7 +33,7 @@ class JSAdapter:
                 self.log.warning(f"Invalid item format in plugin {plugin_name}: {item}")
                 continue
 
-            # 构造符合 xiaomusic 格式的音乐项
+            # 構造符合 xiaomusic 格式的音樂項
             # 生成唯一的 music_id (online_插件名_ID)
             music_id = self._generate_music_id(
                 plugin_name, item.get("id", ""), item.get("songmid", "")
@@ -45,7 +45,7 @@ class JSAdapter:
                 "album": item.get("album", item.get("albumName", "")),
                 "source": "online",
                 "plugin_name": plugin_name,
-                "original_data": item,  # 保存原始数据供后续获取播放链接使用
+                "original_data": item,  # 保存原始數據供後續獲取播放鏈接使用
                 "duration": item.get("duration", 0),
                 "cover": item.get(
                     "artwork", item.get("cover", item.get("albumPic", ""))
@@ -55,7 +55,7 @@ class JSAdapter:
                 "quality": item.get("quality", ""),
             }
 
-            # 添加到 all_music 字典中，以便后续通过 ID 查找
+            # 添加到 all_music 字典中，以便後續通過 ID 查找
             self.xiaomusic.all_music[music_id] = music_item
             formatted_ids.append(music_id)
 
@@ -82,23 +82,23 @@ class JSAdapter:
         return formatted
 
     def format_lyric_result(self, lyric_result: dict) -> str:
-        """格式化歌词结果为 lrc 格式字符串"""
+        """格式化歌詞結果為 lrc 格式字符串"""
         if not lyric_result:
             return ""
 
-        # 获取原始歌词和翻译
+        # 獲取原始歌詞和翻譯
         raw_lrc = lyric_result.get("rawLrc", lyric_result.get("raw_lrc", ""))
         translation = lyric_result.get("translation", "")
 
-        # 如果有翻译，合并歌词和翻译
+        # 如果有翻譯，合併歌詞和翻譯
         if translation and raw_lrc:
-            # 这里可以实现歌词和翻译的合并逻辑
+            # 這裡可以實現歌詞和翻譯的合併邏輯
             return f"{raw_lrc}\n{translation}"
 
         return raw_lrc or translation or ""
 
     def format_album_info_result(self, album_info_result: dict) -> dict:
-        """格式化专辑信息结果"""
+        """格式化專輯信息結果"""
         if not album_info_result:
             return {}
 
@@ -120,7 +120,7 @@ class JSAdapter:
         return formatted
 
     def format_music_sheet_info_result(self, music_sheet_result: dict) -> dict:
-        """格式化音乐单信息结果"""
+        """格式化音樂單信息結果"""
         if not music_sheet_result:
             return {}
 
@@ -141,7 +141,7 @@ class JSAdapter:
         return formatted
 
     def format_artist_works_result(self, artist_works_result: dict) -> dict:
-        """格式化艺术家作品结果"""
+        """格式化藝術家作品結果"""
         if not artist_works_result:
             return {}
 
@@ -155,7 +155,7 @@ class JSAdapter:
         return formatted
 
     def format_top_lists_result(self, top_lists_result: list[dict]) -> list[dict]:
-        """格式化榜单列表结果"""
+        """格式化榜單列表結果"""
         if not top_lists_result:
             return []
 
@@ -177,7 +177,7 @@ class JSAdapter:
         return formatted
 
     def format_top_list_detail_result(self, top_list_detail_result: dict) -> dict:
-        """格式化榜单详情结果"""
+        """格式化榜單詳情結果"""
         if not top_list_detail_result:
             return {}
 
@@ -194,23 +194,23 @@ class JSAdapter:
     def _generate_music_id(
         self, plugin_name: str, item_id: str, fallback_id: str = ""
     ) -> str:
-        """生成唯一音乐ID"""
+        """生成唯一音樂ID"""
         if item_id:
             return f"online_{plugin_name}_{item_id}"
         else:
-            # 如果没有 id，尝试使用其他标识符
+            # 如果沒有 id，嘗試使用其他標識符
             return f"online_{plugin_name}_{fallback_id}"
 
     def _extract_artists(self, item: dict) -> str:
-        """提取艺术家信息"""
-        # 尝试多种可能的艺术家字段
+        """提取藝術家信息"""
+        # 嘗試多種可能的藝術家字段
         artist_fields = ["artist", "artists", "singer", "author", "creator", "singers"]
 
         for field in artist_fields:
             if field in item:
                 value = item[field]
                 if isinstance(value, list):
-                    # 如果是艺术家列表，连接为字符串
+                    # 如果是藝術家列表，連接為字符串
                     artists = []
                     for artist in value:
                         if isinstance(artist, dict):
@@ -219,21 +219,21 @@ class JSAdapter:
                             artists.append(str(artist))
                     return ", ".join(artists)
                 elif isinstance(value, dict):
-                    # 如果是艺术家对象
+                    # 如果是藝術家對象
                     return value.get("name", str(value))
                 elif value:
                     return str(value)
 
-        # 如果没有找到艺术家信息，返回默认值
-        return "未知艺术家"
+        # 如果沒有找到藝術家信息，返回默認值
+        return "未知藝術家"
 
     def convert_music_item_for_plugin(self, music_item: dict) -> dict:
-        """将 xiaomusic 音乐项转换为插件兼容格式"""
-        # 如果原始数据存在，优先使用原始数据
+        """將 xiaomusic 音樂項轉換為插件兼容格式"""
+        # 如果原始數據存在，優先使用原始數據
         if isinstance(music_item, dict) and "original_data" in music_item:
             return music_item["original_data"]
 
-        # 否则构造一个基本的音乐项
+        # 否則構造一個基本的音樂項
         converted = {
             "id": music_item.get("id", ""),
             "title": music_item.get("title", ""),

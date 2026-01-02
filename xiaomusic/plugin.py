@@ -20,24 +20,24 @@ class PluginManager:
         動態加載指定目錄下的所有 Python 插件
         插件目錄需為 Python 包結構
         """
-        # 假设 plugins 已经在搜索路径上
+        # 假設 plugins 已經在搜索路徑上
         package_name = plugin_dir
         package = importlib.import_module(package_name)
 
-        # 遍历 package 中所有模块并动态导入它们
+        # 遍歷 package 中所有模塊並動態導入它們
         for _, modname, _ in pkgutil.iter_modules(package.__path__, package_name + "."):
-            # 跳过__init__文件
+            # 跳過__init__文件
             if modname.endswith("__init__"):
                 continue
             module = importlib.import_module(modname)
-            # 将 log 和 xiaomusic 注入模块的命名空间
+            # 將 log 和 xiaomusic 注入模塊的命名空間
             # 這樣插件內部就可以直接使用 log 和 xiaomusic 對象
             module.log = self.log
             module.xiaomusic = self.xiaomusic
 
-            # 动态获取模块中与文件名同名的函数
+            # 動態獲取模塊中與文件名同名的函數
             # 約定：插件文件名即為入口函數名
-            function_name = modname.split(".")[-1]  # 从模块全名提取函数名
+            function_name = modname.split(".")[-1]  # 從模塊全名提取函數名
             if hasattr(module, function_name):
                 self._funcs[function_name] = getattr(module, function_name)
             else:
@@ -46,35 +46,35 @@ class PluginManager:
                 )
 
     def get_func(self, plugin_name):
-        """根据插件名获取插件函数"""
+        """根據插件名獲取插件函數"""
         return self._funcs.get(plugin_name)
 
     def get_local_namespace(self):
-        """返回包含所有插件函数的字典，可以用作 exec 要执行的代码的命名空间"""
+        """返回包含所有插件函數的字典，可以用作 exec 要執行的代碼的命名空間"""
         return self._funcs.copy()
 
     async def execute_plugin(self, code):
         """
-        执行指定的插件代码。插件函数可以是同步或异步。
-        :param code: 需要执行的插件函数代码（例如 'plugin1("hello")'）
+        執行指定的插件代碼。插件函數可以是同步或異步。
+        :param code: 需要執行的插件函數代碼（例如 'plugin1("hello")'）
         """
-        # 分解代码字符串以获取函数名
+        # 分解代碼字符串以獲取函數名
         func_name = code.split("(")[0]
 
-        # 根据解析出的函数名从插件字典中获取函数
+        # 根據解析出的函數名從插件字典中獲取函數
         plugin_func = self.get_func(func_name)
 
         if not plugin_func:
             raise ValueError(f"No plugin function named '{func_name}' found.")
 
-        # 检查函数是否是异步函数
+        # 檢查函數是否是異步函數
         global_namespace = globals().copy()
         local_namespace = self.get_local_namespace()
         if inspect.iscoroutinefunction(plugin_func):
-            # 如果是异步函数，构建执行用的协程对象
+            # 如果是異步函數，構建執行用的協程對象
             coroutine = eval(code, global_namespace, local_namespace)
-            # 等待协程执行
+            # 等待協程執行
             await coroutine
         else:
-            # 如果是普通函数，直接执行代码
+            # 如果是普通函數，直接執行代碼
             eval(code, global_namespace, local_namespace)

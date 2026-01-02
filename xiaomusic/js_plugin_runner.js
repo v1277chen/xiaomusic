@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * JS 插件运行器
- * 在安全的沙箱环境中运行 MusicFree JS 插件
+ * JS 插件運行器
+ * 在安全的沙箱環境中運行 MusicFree JS 插件
  */
 
 const vm = require('vm');
 const fs = require('fs');
 
-// 设置编码
+// 設置編碼
 process.stdin.setEncoding('utf8');
 process.stdout.setDefaultEncoding('utf8');
 
@@ -30,9 +30,9 @@ class PluginRunner {
         process.stdin.on('data', (data) => {
             buffer += data.toString();
 
-            // 按行分割并处理完整的消息
+            // 按行分割並處理完整的消息
             let lines = buffer.split('\n');
-            buffer = lines.pop(); // 保留最后一行（可能不完整）
+            buffer = lines.pop(); // 保留最後一行（可能不完整）
 
             for (const line of lines) {
                 if (line.trim() === '') continue;
@@ -58,7 +58,7 @@ class PluginRunner {
      */
     async handleMessage(message) {
         const { id, action } = message;
-        // 只在必要时输出日志以避免干扰通信
+        // 只在必要時輸出日誌以避免干擾通信
         // console.debug(`[JS_PLUGIN_RUNNER] Received message: ${action} with id: ${id}`);
 
         try {
@@ -130,22 +130,22 @@ class PluginRunner {
      */
     loadPlugin(name, code) {
         try {
-            // 创建安全的沙箱环境
+            // 創建安全的沙箱環境
             const sandbox = this.createSandbox();
 
-            // 创建上下文
+            // 創建上下文
             const context = vm.createContext(sandbox);
 
-            // 包装代码以支持 ES6 模块语法
+            // 包裝代碼以支持 ES6 模塊語法
             // 自動處理 module.exports 和 export default
             const wrappedCode = `
                 (function() {
                     ${code}
-                    // 如果是 TypeScript 编译的代码，需要处理 exports
+                    // 如果是 TypeScript 編譯的代碼，需要處理 exports
                     if (typeof module !== 'undefined' && module.exports) {
                         return module.exports;
                     }
-                    // 如果是 ES6 模块，需要处理 exports
+                    // 如果是 ES6 模塊，需要處理 exports
                     if (typeof exports !== 'undefined' && exports.__esModule) {
                         return exports.default || exports;
                     }
@@ -153,7 +153,7 @@ class PluginRunner {
                 })();
             `;
 
-            // 执行插件代码
+            // 執行插件代碼
             const options = {
                 timeout: 10000,
                 displayErrors: true,
@@ -162,14 +162,14 @@ class PluginRunner {
 
             const plugin = vm.runInContext(wrappedCode, context, options);
 
-            // 验证插件接口
+            // 驗證插件接口
             if (!plugin || typeof plugin !== 'object') {
                 throw new Error('Plugin must export an object');
             }
 
             this.plugins.set(name, plugin);
 
-            // 记录插件信息
+            // 記錄插件信息
             this.plugins.set(name + '_meta', {
                 loadTime: Date.now(),
                 capabilities: this.detectCapabilities(plugin)
@@ -184,14 +184,14 @@ class PluginRunner {
 
     createSandbox() {
         const safeConsole = {
-            log: (...args) => { },  // 禁用插件的 console.log 避免干扰主进程通信
-            warn: (...args) => console.warn(`[PLUGIN]`, ...args),  // 保留警告，但添加标识
-            error: (...args) => console.error(`[PLUGIN]`, ...args), // 保留错误，但添加标识
-            debug: (...args) => { }  // 禁用调试输出
+            log: (...args) => { },  // 禁用插件的 console.log 避免干擾主進程通信
+            warn: (...args) => console.warn(`[PLUGIN]`, ...args),  // 保留警告，但添加標識
+            error: (...args) => console.error(`[PLUGIN]`, ...args), // 保留錯誤，但添加標識
+            debug: (...args) => { }  // 禁用調試輸出
         };
 
         const safeFetch = async (url, options = {}) => {
-            // 代理网络请求到主进程
+            // 代理網絡請求到主進程
             return await this.proxyFetch(url, options);
         };
 
@@ -202,7 +202,7 @@ class PluginRunner {
             return setTimeout(callback, delay);
         };
 
-        // 支持的模块列表
+        // 支持的模塊列表
         const allowedModules = {
             'axios': require('axios'),
             'crypto-js': require('crypto-js'),
@@ -222,7 +222,7 @@ class PluginRunner {
         const module = { exports: {} };
         const exports = module.exports;
 
-        // 模拟 env 对象
+        // 模擬 env 對象
         const env = {
             getUserVariables: () => ({
                 music_u: '',
@@ -232,33 +232,33 @@ class PluginRunner {
         };
 
         return {
-            // 基础对象
+            // 基礎對象
             console: safeConsole,
             Buffer: Buffer,
             Math: Math,
             Date: Date,
             JSON: JSON,
 
-            // 受限的全局对象
+            // 受限的全局對象
             global: undefined,
             process: undefined,
 
-            // 受限的网络访问
+            // 受限的網絡訪問
             fetch: safeFetch,
             XMLHttpRequest: undefined,
 
-            // 受限的定时器
+            // 受限的定時器
             setTimeout: safeTimer,
             setInterval: undefined,
             clearTimeout: clearTimeout,
             clearInterval: clearInterval,
 
-            // 模块系统
+            // 模塊系統
             module: module,
             exports: exports,
             require: safeRequire,
 
-            // MusicFree 环境对象
+            // MusicFree 環境對象
             env: env
         };
     }
@@ -279,9 +279,9 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 search 方法 - 参考 MusicFreeDesktop 实现
+        // 檢查插件是否有 search 方法 - 參考 MusicFreeDesktop 實現
         if (!plugin.search || typeof plugin.search !== 'function') {
-            // 只在详细模式下输出调试信息
+            // 只在詳細模式下輸出調試信息
             console.debug(`[JS_PLUGIN_RUNNER] Plugin ${pluginName} does not have a search function`);
             return {
                 isEnd: true,
@@ -292,12 +292,12 @@ class PluginRunner {
         try {
             let query, page, type;
             if (typeof params === 'string') {
-                // 兼容旧的字符串格式
+                // 兼容舊的字符串格式
                 query = params;
                 page = 1;
                 type = 'music';
             } else if (typeof params === 'object') {
-                // 新的对象格式，参考 MusicFreeDesktop
+                // 新的對象格式，參考 MusicFreeDesktop
                 query = params.keywords || params.query || '';
                 page = params.page || 1;
                 type = params.type || 'music';
@@ -305,33 +305,33 @@ class PluginRunner {
                 throw new Error('Invalid search parameters');
             }
 
-            // 移除调试输出，避免干扰 JSON 通信
+            // 移除調試輸出，避免干擾 JSON 通信
             // console.debug(`[JS_PLUGIN_RUNNER] Calling search with query: ${query}, page: ${page}, type: ${type}`);
             const result = await plugin.search(query, page, type);
 
-            // 将调试信息写入日志文件而不是控制台
+            // 將調試信息寫入日誌文件而不是控制台
             fs.appendFileSync('00-plugin_debug.log', `===========================${pluginName}插件原始返回结果：===================================\n`);
             fs.appendFileSync('00-plugin_debug.log', `${JSON.stringify(result, null, 2)}\n`);
-            // 严格验证返回结果 - 参考 MusicFreeDesktop 实现
+            // 嚴格驗證返回結果 - 參考 MusicFreeDesktop 實現
             if (!result || typeof result !== 'object') {
                 console.error(`[JS_PLUGIN_RUNNER] Invalid search result from plugin ${pluginName}:`, typeof result);
                 throw new Error(`Plugin ${pluginName} returned invalid search result`);
             }
 
-            // 确保返回正确的数据结构 - 参考 MusicFreeDesktop 实现
+            // 確保返回正確的數據結構 - 參考 MusicFreeDesktop 實現
             const validatedResult = {
-                isEnd: result.isEnd !== false,  // 默认为 true，除非明确设置为 false
-                data: Array.isArray(result.data) ? result.data : []  // 确保 data 是数组
+                isEnd: result.isEnd !== false,  // 默認為 true，除非明確設置為 false
+                data: Array.isArray(result.data) ? result.data : []  // 確保 data 是數組
             };
-            //为 validatedResult中data的 每个元素添加一个 platform 属性
+            //為 validatedResult中data的 每個元素添加一個 platform 屬性
             validatedResult.data.forEach(item => {
                 item.platform = pluginName;
             });
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return validatedResult;
         } catch (error) {
             console.error(`[JS_PLUGIN_RUNNER] Search error in plugin ${pluginName}:`, error.message);
-            // console.error(`[JS_PLUGIN_RUNNER] Full error:`, error);  // 避免输出可能包含非JSON的对象
+            // console.error(`[JS_PLUGIN_RUNNER] Full error:`, error);  // 避免輸出可能包含非JSON的對象
             throw new Error(`Search failed in plugin ${pluginName}: ${error.message}`);
         }
     }
@@ -343,15 +343,15 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 getMediaSource 方法 - 参考 MusicFreeDesktop 实现
+        // 檢查插件是否有 getMediaSource 方法 - 參考 MusicFreeDesktop 實現
         if (!plugin.getMediaSource || typeof plugin.getMediaSource !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
             const result = await plugin.getMediaSource(musicItem, quality);
-            // 参考 MusicFreeDesktop 实现，验证结果
+            // 參考 MusicFreeDesktop 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -372,15 +372,15 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 getLyric 方法 - 参考 MusicFreeDesktop 实现
+        // 檢查插件是否有 getLyric 方法 - 參考 MusicFreeDesktop 實現
         if (!plugin.getLyric || typeof plugin.getLyric !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
             const result = await plugin.getLyric(songId);
-            // 参考 MusicFreeDesktop 实现，验证结果
+            // 參考 MusicFreeDesktop 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -401,16 +401,16 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 getAlbumInfo 方法 (按照官方文档标准)
+        // 檢查插件是否有 getAlbumInfo 方法 (按照官方文檔標準)
         if (!plugin.getAlbumInfo || typeof plugin.getAlbumInfo !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
-            // 使用默认页码 1（从MusicFree官方文档得知默认为1）
+            // 使用默認頁碼 1（從MusicFree官方文檔得知默認為1）
             const result = await plugin.getAlbumInfo(albumInfo, 1);
-            // 参考 MusicFree 实现，验证结果
+            // 參考 MusicFree 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -431,16 +431,16 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 getMusicSheetInfo 方法 (按照官方文档标准)
+        // 檢查插件是否有 getMusicSheetInfo 方法 (按照官方文檔標準)
         if (!plugin.getMusicSheetInfo || typeof plugin.getMusicSheetInfo !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
-            // 使用默认页码 1（从MusicFree官方文档得知默认为1）
+            // 使用默認頁碼 1（從MusicFree官方文檔得知默認為1）
             const result = await plugin.getMusicSheetInfo(playlistInfo, 1);
-            // 参考 MusicFree 实现，验证结果
+            // 參考 MusicFree 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -461,15 +461,15 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 getMusicInfo 方法 (按照官方文档标准)
+        // 檢查插件是否有 getMusicInfo 方法 (按照官方文檔標準)
         if (!plugin.getMusicInfo || typeof plugin.getMusicInfo !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
             const result = await plugin.getMusicInfo(musicItem);
-            // 参考 MusicFree 实现，验证结果
+            // 參考 MusicFree 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -490,15 +490,15 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 getArtistWorks 方法 (按照官方文档标准)
+        // 檢查插件是否有 getArtistWorks 方法 (按照官方文檔標準)
         if (!plugin.getArtistWorks || typeof plugin.getArtistWorks !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
             const result = await plugin.getArtistWorks(artistItem, page, type);
-            // 参考 MusicFree 实现，验证结果
+            // 參考 MusicFree 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -519,15 +519,15 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 importMusicItem 方法 (按照官方文档标准)
+        // 檢查插件是否有 importMusicItem 方法 (按照官方文檔標準)
         if (!plugin.importMusicItem || typeof plugin.importMusicItem !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
             const result = await plugin.importMusicItem(urlLike);
-            // 参考 MusicFree 实现，验证结果
+            // 參考 MusicFree 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -548,15 +548,15 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 importMusicSheet 方法 (按照官方文档标准)
+        // 檢查插件是否有 importMusicSheet 方法 (按照官方文檔標準)
         if (!plugin.importMusicSheet || typeof plugin.importMusicSheet !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
             const result = await plugin.importMusicSheet(urlLike);
-            // 参考 MusicFree 实现，验证结果
+            // 參考 MusicFree 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -577,15 +577,15 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 getTopLists 方法 (按照官方文档标准)
+        // 檢查插件是否有 getTopLists 方法 (按照官方文檔標準)
         if (!plugin.getTopLists || typeof plugin.getTopLists !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
             const result = await plugin.getTopLists();
-            // 参考 MusicFree 实现，验证结果
+            // 參考 MusicFree 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -606,15 +606,15 @@ class PluginRunner {
             throw new Error(`Plugin ${pluginName} not found`);
         }
 
-        // 检查插件是否有 getTopListDetail 方法 (按照官方文档标准)
+        // 檢查插件是否有 getTopListDetail 方法 (按照官方文檔標準)
         if (!plugin.getTopListDetail || typeof plugin.getTopListDetail !== 'function') {
-            // 不输出调试信息以避免干扰通信
+            // 不輸出調試信息以避免干擾通信
             return null;
         }
 
         try {
             const result = await plugin.getTopListDetail(topListItem, page);
-            // 参考 MusicFree 实现，验证结果
+            // 參考 MusicFree 實現，驗證結果
             if (result === null || result === undefined) {
                 return null;
             }
@@ -636,11 +636,11 @@ class PluginRunner {
     }
 
     async proxyFetch(url, options) {
-        // 代理网络请求到主进程
+        // 代理網絡請求到主進程
         const requestId = ++this.requestId;
 
         return new Promise((resolve, reject) => {
-            // 发送请求到主进程
+            // 發送請求到主進程
             this.sendResponse('fetch_' + requestId, {
                 action: 'fetch',
                 requestId: requestId,
@@ -648,7 +648,7 @@ class PluginRunner {
                 options: options
             });
 
-            // 等待响应（简化实现）
+            // 等待響應（簡化實現）
             setTimeout(() => {
                 reject(new Error('Fetch proxy not implemented'));
             }, 1000);
@@ -656,10 +656,10 @@ class PluginRunner {
     }
 }
 
-// 启动插件运行器
+// 啟動插件運行器
 const runner = new PluginRunner();
 
-// 处理进程退出
+// 處理進程退出
 process.on('SIGINT', () => {
     console.log('Received SIGINT, shutting down gracefully');
     process.exit(0);

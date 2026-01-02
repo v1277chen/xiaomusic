@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- PWA必须的配置 -->
-        <link rel="manifest" href="/manifest.json">
-        <title>Mini音乐播放器</title>
-        <style>
-        /* 新增音量控制样式 */
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- PWA必須的配置 -->
+    <link rel="manifest" href="/manifest.json">
+    <title>Mini音樂播放器</title>
+    <style>
+        /* 新增音量控制樣式 */
         .volume-control {
             position: relative;
             align-items: center;
@@ -40,7 +41,7 @@
             opacity: 1;
         }
 
-        /* 自定义滑动条样式 */
+        /* 自定義滑動條樣式 */
         .volume-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 12px;
@@ -49,6 +50,7 @@
             border-radius: 50%;
             cursor: pointer;
         }
+
         body {
             background: #f5f5f5;
             font-family: Arial, "Microsoft Yahei";
@@ -62,10 +64,10 @@
             background: #fff;
             border-radius: 15px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        /* 封面图片 */
+        /* 封面圖片 */
         .cover {
             width: 200px;
             height: 200px;
@@ -97,7 +99,7 @@
             font-size: 14px;
         }
 
-        /* 进度条 */
+        /* 進度條 */
         .progress-container {
             width: 100%;
             height: 4px;
@@ -115,7 +117,7 @@
             transition: width 0.1s linear;
         }
 
-        /* 时间显示 */
+        /* 時間顯示 */
         .time {
             display: flex;
             justify-content: space-between;
@@ -123,7 +125,7 @@
             color: #666;
         }
 
-        /* 控制按钮 */
+        /* 控制按鈕 */
         .controls {
             display: flex;
             justify-content: center;
@@ -175,113 +177,107 @@
             background: #ffe5e5;
             color: #ff4d4d;
         }
-        </style>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
-    </head>
-    <body>
-        <script> // 连接到服务端 
-        const socket = io("/", { transports: ["websocket"] }); 
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+
+<body>
+    <script> // 連接到服務端 
+        const socket = io("/", { transports: ["websocket"] });
         socket.on('connect', () => {
             console.log('Connected to the server');
             socket.emit('my_event', 'Hello, server!');
         });
 
-        // 接收广播消息 
-        socket.on("response", (data) => { const div = document.createElement("div"); 
-            div.textContent = `${data.action}: ${data.status}`; 
+        // 接收廣播消息 
+        socket.on("response", (data) => {
+            const div = document.createElement("div");
+            div.textContent = `${data.action}: ${data.status}`;
 
 
-            if( data.action=='play')
-        {
-                playlist[0].src=data.args;
-                playlist[0].artist="小爱在线"
-                playlist[0].title="小爱在线"
+            if (data.action == 'play') {
+                playlist[0].src = data.args;
+                playlist[0].artist = "小愛在線"
+                playlist[0].title = "小愛在線"
                 console.log(data.args)
-                playSong(0) ;
+                playSong(0);
             }
-            if( data.action=='stop')
-        {
-                togglePlay() 
+            if (data.action == 'stop') {
+                togglePlay()
             }
             const audio = document.getElementById('audio');
             const volumeSlider = document.getElementById('volumeSlider');
-            if( data.action=='volume')
-        {
+            if (data.action == 'volume') {
 
 
-                audio.volume=data.args/100
-                volumeSlider.value=audio.volume
+                audio.volume = data.args / 100
+                volumeSlider.value = audio.volume
             }
-            if( data.action=='down')
-        {
-                audio.volume=audio.volume-0.2
-                volumeSlider.value=audio.volume
+            if (data.action == 'down') {
+                audio.volume = audio.volume - 0.2
+                volumeSlider.value = audio.volume
             }
-            if( data.action=='up')
-        {
-                audio.volume=audio.volume+0.2
-                volumeSlider.value=audio.volume
+            if (data.action == 'up') {
+                audio.volume = audio.volume + 0.2
+                volumeSlider.value = audio.volume
             }
-            document.getElementById("messages").appendChild(div); }); 
-        </script>
+            document.getElementById("messages").appendChild(div);
+        }); 
+    </script>
 
-        <div class="player">
+    <div class="player">
 
-            <div class="cover">
-                <img id="cover-image" src="https://tse4-mm.cn.bing.net/th/id/OIP-C.ou-y715Of4TbrAPN-j96sQHaEj?w=309&h=188&c=7&r=0&o=5&pid=1.7" alt="封面">
-            </div>
-
-            <div class="song-info">
-                <h2 class="song-title" id="song-title">Let Go</h2>
-                <p class="artist" id="artist">Avril Lavigne</p>
-            </div>
-
-            <div class="progress-container" id="progress-container">
-                <div class="progress" id="progress"></div>
-            </div>
-
-            <div class="time">
-                <span id="current-time">00:00</span>
-                <span id="duration">00:00</span>
-            </div>
-
-            <div class="controls">
-                <div class="btn btn-prev" onclick="prevSong()">⏮</div>
-                <div class="btn btn-play" id="playBtn" onclick="togglePlay()">▶</div>
-                <div class="btn btn-next" onclick="nextSong()">⏭</div>
-            </div>
-            <br>
-            <!-- 新增音量控制 -->
-            <div class="volume-control">
-                <button class="btn-volume" onclick="toggleMute()">🔊</button>
-                <input type="range" 
-                    id="volumeSlider" 
-                    class="volume-slider" 
-                    min="0" 
-                    max="1" 
-                    step="0.1" 
-                    value="1">
-            </div>
-            <ul class="playlist" id="playlist"></ul>
+        <div class="cover">
+            <img id="cover-image"
+                src="https://tse4-mm.cn.bing.net/th/id/OIP-C.ou-y715Of4TbrAPN-j96sQHaEj?w=309&h=188&c=7&r=0&o=5&pid=1.7"
+                alt="封面">
         </div>
 
-        <audio id="audio" src="" ></audio>
+        <div class="song-info">
+            <h2 class="song-title" id="song-title">Let Go</h2>
+            <p class="artist" id="artist">Avril Lavigne</p>
+        </div>
+
+        <div class="progress-container" id="progress-container">
+            <div class="progress" id="progress"></div>
+        </div>
+
+        <div class="time">
+            <span id="current-time">00:00</span>
+            <span id="duration">00:00</span>
+        </div>
+
+        <div class="controls">
+            <div class="btn btn-prev" onclick="prevSong()">⏮</div>
+            <div class="btn btn-play" id="playBtn" onclick="togglePlay()">▶</div>
+            <div class="btn btn-next" onclick="nextSong()">⏭</div>
+        </div>
+        <br>
+        <!-- 新增音量控制 -->
+        <div class="volume-control">
+            <button class="btn-volume" onclick="toggleMute()">🔊</button>
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.1" value="1">
+        </div>
+        <ul class="playlist" id="playlist"></ul>
+    </div>
+
+    <audio id="audio" src=""></audio>
 
 
-        <script>
-        // 在初始化代码中添加
+    <script>
+        // 在初始化代碼中添加
         document.body.addEventListener('touchstart', function initAudio() {
-            audio.load(); // iOS需要预加载
+            audio.load(); // iOS需要預加載
             document.body.removeEventListener('touchstart', initAudio);
         });
-        // 音乐数据
+        // 音樂數據
         const playlist = [
             {
                 title: "一剪梅",
                 artist: "未知",
                 cover: "https://tse4-mm.cn.bing.net/th/id/OIP-C.ou-y715Of4TbrAPN-j96sQHaEj?w=309&h=188&c=7&r=0&o=5&pid=1.7",
                 src: "/static/3thdplay.mp3"
-            } 
+            }
         ];
 
         const audio = document.getElementById('audio');
@@ -290,7 +286,7 @@
         let isPlaying = false;
         let wakeLock = null;
         let audioContext = null;
-        // 在播放前预处理链接
+        // 在播放前預處理鏈接
         function ensureRangeSupport(url) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
@@ -299,7 +295,7 @@
                     if (xhr.getResponseHeader('Accept-Ranges')) {
                         resolve(url);
                     } else {
-                        resolve(`${url}?force_range=true`); // 兼容不支持的服务端
+                        resolve(`${url}?force_range=true`); // 兼容不支持的服務端
                     }
                 };
                 xhr.send();
@@ -315,7 +311,7 @@
                 playlistEl.appendChild(li);
             });
 
-            // 仅加载第一首但不播放
+            // 僅加載第一首但不播放
 
             const firstSong = playlist[0];
             document.getElementById('song-title').textContent = firstSong.title;
@@ -325,7 +321,7 @@
         }
         let isFirstPlay = true;
         // 播放歌曲
-        async   function playSong(index) {
+        async function playSong(index) {
             currentSongIndex = index;
             const song = playlist[index];
             const src = await ensureRangeSupport(song.src);
@@ -334,14 +330,14 @@
             document.getElementById('cover-image').src = song.cover;
             audio.src = src
 
-            // 更新播放列表样式
+            // 更新播放列表樣式
             document.querySelectorAll('#playlist li').forEach((li, i) => {
                 li.classList.toggle('playing', i === index);
             });
-            // 只有当不是首次播放时才自动播放
+            // 只有當不是首次播放時才自動播放
             if (!isFirstPlay) {
                 audio.play().catch(error => {
-                    console.log('播放请求被阻止:', error);
+                    console.log('播放請求被阻止:', error);
 
                 });
                 playBtn.textContent = '⏸';
@@ -349,27 +345,27 @@
             }
         }
 
-        // 切换播放/暂停
-        async    function togglePlay() {
+        // 切換播放/暫停
+        async function togglePlay() {
             if (isFirstPlay) {
-                // 第一次点击时触发用户手势
+                // 第一次點擊時觸發用戶手勢
                 console.log("---firest play-----")
-                await   audio.play()
-                .then(() => {
-                    isFirstPlay = false;
-                    isPlaying = true;
-                    playBtn.textContent = '⏸';
-                    //    audio.play(); // 暂停等待用户操作
+                await audio.play()
+                    .then(() => {
+                        isFirstPlay = false;
+                        isPlaying = true;
+                        playBtn.textContent = '⏸';
+                        //    audio.play(); // 暫停等待用戶操作
 
-                })
-                .catch(error => {
-                    alert('请点击此处开始播放');
-                });
+                    })
+                    .catch(error => {
+                        alert('請點擊此處開始播放');
+                    });
                 if (!audioContext) {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const source = audioContext.createMediaElementSource(audio);
                     source.connect(audioContext.destination);
-                    // 请求保持唤醒
+                    // 請求保持喚醒
                     console.log('---------init audiocontest')
                 }
                 await requestWakeLock();
@@ -399,53 +395,53 @@
             playSong(currentSongIndex);
         }
 
-        // 播放进度更新
-        audio.addEventListener('timeupdate', function() {
+        // 播放進度更新
+        audio.addEventListener('timeupdate', function () {
             const progress = (audio.currentTime / audio.duration) * 100;
             document.getElementById('progress').style.width = `${progress}%`;
 
-            document.getElementById('current-time').textContent = 
+            document.getElementById('current-time').textContent =
                 formatTime(audio.currentTime);
         });
 
-        // 总时长显示
-        audio.addEventListener('loadedmetadata', function() {
-            document.getElementById('duration').textContent = 
+        // 總時長顯示
+        audio.addEventListener('loadedmetadata', function () {
+            document.getElementById('duration').textContent =
                 formatTime(audio.duration);
         });
 
-        // 点击进度条跳转
+        // 點擊進度條跳轉
         const progressContainer = document.getElementById('progress-container');
-        progressContainer.addEventListener('click', function(e) {
+        progressContainer.addEventListener('click', function (e) {
             const width = this.clientWidth;
             const clickX = e.offsetX;
             audio.currentTime = (clickX / width) * audio.duration;
         });
 
-        // 格式化时间（秒 → mm:ss）
+        // 格式化時間（秒 → mm:ss）
         function formatTime(seconds) {
             const minutes = Math.floor(seconds / 60);
             seconds = Math.floor(seconds % 60);
             return `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
-        // 在 JavaScript 中新增以下代码
+        // 在 JavaScript 中新增以下代碼
         const volumeSlider = document.getElementById('volumeSlider');
         let isMuted = false;
         let lastVolume = 1;
 
-        // 音量滑动条控制
+        // 音量滑動條控制
         volumeSlider.addEventListener('input', (e) => {
             audio.volume = e.target.value;
             if (audio.volume === '0') {
                 document.querySelector('.btn-volume').textContent = '🔇';
             } else {
-                document.querySelector('.btn-volume').textContent = 
+                document.querySelector('.btn-volume').textContent =
                     audio.volume > 0.5 ? '🔊' : '🔉';
             }
-            isMuted = false; // 取消静音状态
+            isMuted = false; // 取消靜音狀態
         });
 
-        // 静音切换
+        // 靜音切換
         function toggleMute() {
             isMuted = !isMuted;
             if (isMuted) {
@@ -456,7 +452,7 @@
             } else {
                 audio.volume = lastVolume;
                 volumeSlider.value = lastVolume;
-                document.querySelector('.btn-volume').textContent = 
+                document.querySelector('.btn-volume').textContent =
                     lastVolume > 0.5 ? '🔊' : '🔉';
             }
         }
@@ -465,35 +461,36 @@
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
                     wakeLock.addEventListener('release', () => {
-                        updateStatus('屏幕锁已释放');
+                        updateStatus('屏幕鎖已釋放');
                     });
                 }
             } catch (err) {
-                console.warn('Wake Lock 错误:', err);
+                console.warn('Wake Lock 錯誤:', err);
             }
 
-            // 兼容iOS处理
+            // 兼容iOS處理
             if (/(iPhone|iPad)/i.test(navigator.userAgent)) {
                 audio.setAttribute('playsinline', 'true');
                 audio.setAttribute('webkit-playsinline', 'true');
             }
         }
         // 初始化Service Worker
-        //console.log('Service Worker 注册成功');
+        //console.log('Service Worker 註冊成功');
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').then(() => {
-                console.log('Service Worker 注册成功');
+                console.log('Service Worker 註冊成功');
             });
         }
-        // 初始化音量（默认1）
+        // 初始化音量（默認1）
         audio.volume = 1;
-        // 自动播放下一首
+        // 自動播放下一首
         audio.addEventListener('ended', nextSong);
 
         // 初始化
         initPlaylist();
         //  playSong(0); 
-        </script>
-        <div id="messages"></div>
-    </body>
+    </script>
+    <div id="messages"></div>
+</body>
+
 </html>

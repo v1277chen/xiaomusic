@@ -18,29 +18,29 @@ class CustomCronTrigger(BaseTrigger):
         self.cron_expression = cron_expression
         self.holiday_checker = holiday_checker
 
-        # 分离表达式和注释
+        # 分離表達式和註釋
         expr_parts = cron_expression.split("#", 1)
         self.base_expression = expr_parts[0].strip()
         self.annotation = expr_parts[1].strip().lower() if len(expr_parts) > 1 else ""
 
-        # 检查注释中是否包含特殊值
+        # 檢查註釋中是否包含特殊值
         self.check_workday = "workday" in self.annotation
         self.check_offday = "offday" in self.annotation
 
-        # 构建基础Cron触发器
+        # 構建基礎Cron觸發器
         try:
             self.base_trigger = CronTrigger.from_crontab(self.base_expression)
         except Exception as e:
-            raise ValueError(f"无效的Cron表达式: {self.base_expression}") from e
+            raise ValueError(f"無效的Cron表達式: {self.base_expression}") from e
 
     def get_next_fire_time(self, previous_fire_time, now):
-        # 获取基础Cron表达式的下一个触发时间
+        # 獲取基礎Cron表達式的下一個觸發時間
         next_time = self.base_trigger.get_next_fire_time(previous_fire_time, now)
 
         if not next_time:
             return None
 
-        # 如果需要检查工作日/休息日
+        # 如果需要檢查工作日/休息日
         if self.check_workday or self.check_offday:
             year = next_time.year
             month = next_time.month
@@ -51,7 +51,7 @@ class CustomCronTrigger(BaseTrigger):
             else:  # check_offday
                 valid = is_off_day(year, month, day)
 
-            # 如果日期有效，返回时间；否则寻找下一个有效时间 (遞歸調用)
+            # 如果日期有效，返回時間；否則尋找下一個有效時間 (遞歸調用)
             if valid:
                 return next_time
             else:
@@ -79,7 +79,7 @@ class Crontab:
         :param job: 異步任務函數
         """
         try:
-            # 检查表达式中是否包含注释标记
+            # 檢查表達式中是否包含註釋標記
             if "#" in expression and (
                 "workday" in expression.lower() or "offday" in expression.lower()
             ):
@@ -169,7 +169,7 @@ class Crontab:
         self.add_job(expression, job)
 
     def add_job_cron(self, xiaomusic, cron):
-        expression = cron["expression"]  # cron 计划格式
+        expression = cron["expression"]  # cron 計劃格式
         name = cron["name"]  # stop, play, play_music_list, tts
         did = cron.get("did", "")
         arg1 = cron.get("arg1", "")
@@ -185,7 +185,7 @@ class Crontab:
                 f"'{self.__class__.__name__}' object has no attribute '{jobname}'"
             )
 
-    # 清空任务
+    # 清空任務
     def clear_jobs(self):
         for job in self.scheduler.get_jobs():
             try:
@@ -193,7 +193,7 @@ class Crontab:
             except Exception as e:
                 self.log.exception(f"Execption {e}")
 
-    # 重新加载计划任务
+    # 重新加載計劃任務
     def reload_config(self, xiaomusic):
         self.clear_jobs()
 

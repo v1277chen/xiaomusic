@@ -3,27 +3,27 @@
 // })
 let isPlaying = false;
 let playModeIndex = 2;
-//重新设计playModes
+//重新設計playModes
 const playModes = {
   0: {
     icon: "repeat_one",
-    cmd: "单曲循环",
+    cmd: "單曲循環",
   },
   1: {
     icon: "repeat",
-    cmd: "全部循环",
+    cmd: "全部循環",
   },
   2: {
     icon: "shuffle",
-    cmd: "随机播放",
+    cmd: "隨機播放",
   },
   3: {
     icon: "filter_1",
-    cmd: "单曲播放",
+    cmd: "單曲播放",
   },
   4: {
     icon: "playlist_play",
-    cmd: "顺序播放",
+    cmd: "順序播放",
   },
 };
 
@@ -70,7 +70,7 @@ function playOnDevice() {
   });
 }
 function stopPlay() {
-  sendcmd("关机");
+  sendcmd("關機");
 }
 
 function prevTrack() {
@@ -90,7 +90,7 @@ function togglePlayMode(isSend = true) {
   $("#modeBtn .tooltip").text(playModes[playModeIndex].cmd);
   // return;
   isSend && sendcmd(playModes[playModeIndex].cmd);
-  console.log(`当前播放模式: ${playModeIndex} ${playModes[playModeIndex].cmd}`);
+  console.log(`當前播放模式: ${playModeIndex} ${playModes[playModeIndex].cmd}`);
   playModeIndex = (playModeIndex + 1) % Object.keys(playModes).length;
 }
 
@@ -110,8 +110,8 @@ function addToFavorites() {
 }
 
 function openSettings() {
-  console.log("打开设置");
-  //新建标签页打开setting.html页面
+  console.log("打開設定");
+  //新建標籤頁打開setting.html頁面
   window.open("setting.html", "_blank");
 }
 function toggleVolume() {
@@ -125,34 +125,34 @@ function toggleTimer() {
   $("#timer-component").toggle();
 }
 function togglePlayLink() {
-  $("#playlink-component").toggle(); // 切换播放链接的显示状态
+  $("#playlink-component").toggle(); // 切換播放鏈接的顯示狀態
 }
 function toggleLocalPlay() {
   $("#audio").fadeIn();
 }
 function toggleWarning() {
-  $("#warning-component").toggle(); // 切换警告框的显示状态
+  $("#warning-component").toggle(); // 切換警告框的顯示狀態
 }
 function toggleDelete() {
   var del_music_name = $("#music_name").val();
   $("#delete-music-name").text(del_music_name);
-  $("#delete-component").toggle(); // 切换删除框的显示状态
+  $("#delete-component").toggle(); // 切換刪除框的顯示狀態
 }
 function confirmDelete() {
   var del_music_name = $("#music_name").val();
-  console.log(`删除歌曲 ${del_music_name}`);
-  $("#delete-component").hide(); // 隐藏删除框
+  console.log(`刪除歌曲 ${del_music_name}`);
+  $("#delete-component").hide(); // 隱藏刪除框
   $.ajax({
     type: "POST",
     url: "/delmusic",
     data: JSON.stringify({ name: del_music_name }),
     contentType: "application/json; charset=utf-8",
     success: () => {
-      alert(`删除 ${del_music_name} 成功`);
+      alert(`刪除 ${del_music_name} 成功`);
       refresh_music_list();
     },
     error: () => {
-      alert(`删除 ${del_music_name} 失败`);
+      alert(`刪除 ${del_music_name} 失敗`);
     },
   });
 }
@@ -165,7 +165,7 @@ function formatTime(seconds) {
 var offset = 0;
 var duration = 0;
 let no_warning = localStorage.getItem("no-warning");
-// 拉取现有配置
+// 拉取現有配置
 $.get("/getsetting", function (data, status) {
   console.log(data, status);
   localStorage.setItem("mi_did", data.mi_did);
@@ -205,7 +205,7 @@ $.get("/getsetting", function (data, status) {
       if (value === did) {
         playModeIndex = cur_device.play_type;
         console.log(
-          "%c当前设备播放模式: ",
+          "%c當前設備播放模式: ",
           "color: #007acc;",
           cur_device.play_type
         );
@@ -215,7 +215,7 @@ $.get("/getsetting", function (data, status) {
   });
   var option = $("<option></option>")
     .val("web_device")
-    .text("本机")
+    .text("本機")
     .prop("selected", "web_device" === did);
   $("#did").append(option);
 
@@ -295,13 +295,13 @@ function _refresh_music_list(callback) {
 
     $("#music_list").trigger("change");
 
-    // 获取当前播放列表
+    // 獲取當前播放列表
     $.get(`/curplaylist?did=${did}`, function (playlist, status) {
       if (playlist != "") {
         $("#music_list").val(playlist);
         $("#music_list").trigger("change");
       } else {
-        // 使用本地记录的
+        // 使用本地記錄的
         playlist = localStorage.getItem("cur_playlist");
         if (data.hasOwnProperty(playlist)) {
           $("#music_list").val(playlist);
@@ -315,24 +315,24 @@ function _refresh_music_list(callback) {
 
 // 拉取播放列表
 function refresh_music_list() {
-  // 刷新列表时清空并临时禁用搜索框
+  // 刷新列表時清空並臨時禁用搜索框
   const searchInput = document.getElementById("search");
   const oriPlaceHolder = searchInput.placeholder;
   const oriValue = searchInput.value;
   const inputEvent = new Event("input", { bubbles: true });
   searchInput.value = "";
-  // 分发事件，让其他控件改变状态
+  // 分發事件，讓其他控件改變狀態
   searchInput.dispatchEvent(inputEvent);
   searchInput.disabled = true;
-  searchInput.placeholder = "请等待...";
+  searchInput.placeholder = "請等待...";
 
   _refresh_music_list(() => {
-    // 刷新完成再启用
+    // 刷新完成再啟用
     searchInput.disabled = false;
     searchInput.value = oriValue;
     searchInput.dispatchEvent(inputEvent);
     searchInput.placeholder = oriPlaceHolder;
-    // 获取下正在播放的音乐
+    // 獲取下正在播放的音樂
     if (did != "web_device") {
       connectWebSocket(did);
     }
@@ -384,7 +384,7 @@ function playUrl() {
 function playProxyUrl() {
   const origin_url = $("#music-url").val();
   const protocol = window.location.protocol;
-  const host= window.location.host;
+  const host = window.location.host;
   const baseUrl = `${protocol}//${host}`;
   const urlb64 = btoa(origin_url);
   const url = `${baseUrl}/proxy?urlb64=${urlb64}`;
@@ -420,7 +420,7 @@ function do_play_music(musicname, searchkey) {
   });
 }
 
-// 上传功能：触发文件选择并提交到后端
+// 上傳功能：觸發文件選擇並提交到後端
 function triggerUpload() {
   const uploadInput = document.getElementById("upload-file");
   if (uploadInput) {
@@ -445,17 +445,17 @@ document.addEventListener("DOMContentLoaded", function () {
           method: 'POST',
           body: form,
         });
-        if (!resp.ok) throw new Error('网络错误');
+        if (!resp.ok) throw new Error('網絡錯誤');
         const data = await resp.json();
         if (data && data.ret === 'OK') {
-          alert('上传成功: ' + data.filename);
+          alert('上傳成功: ' + data.filename);
           refresh_music_list();
         } else {
-          alert('上传失败');
+          alert('上傳失敗');
         }
       } catch (err) {
         console.error(err);
-        alert('上传失败');
+        alert('上傳失敗');
       }
     });
   }
@@ -492,7 +492,7 @@ function check_status_refresh_music_list(retries) {
     } else if (retries > 0) {
       setTimeout(function () {
         check_status_refresh_music_list(retries - 1);
-      }, 1000); // 等待1秒后重试
+      }, 1000); // 等待1秒後重試
     }
   });
 }
@@ -505,10 +505,10 @@ function sendcmd(cmd) {
     data: JSON.stringify({ did: did, cmd: cmd }),
     success: () => {
       if (cmd == "刷新列表") {
-        check_status_refresh_music_list(3); // 最多重试3次
+        check_status_refresh_music_list(3); // 最多重試3次
       }
       if (
-        ["全部循环", "单曲循环", "随机播放", "单曲播放", "顺序播放"].includes(
+        ["全部循環", "單曲循環", "隨機播放", "單曲播放", "順序播放"].includes(
           cmd
         )
       ) {
@@ -521,7 +521,7 @@ function sendcmd(cmd) {
   });
 }
 
-// 监听输入框的输入事件
+// 監聽輸入框的輸入事件
 function debounce(func, delay) {
   let timeout;
   return function (...args) {
@@ -551,9 +551,9 @@ function handleSearch() {
       fetch(`/searchmusic?name=${encodeURIComponent(query)}`)
         .then((response) => response.json())
         .then((data) => {
-          musicSelect.innerHTML = ""; // 清空现有选项
+          musicSelect.innerHTML = ""; // 清空現有選項
 
-          // 找到的优先显示
+          // 找到的優先顯示
           if (data.length > 0) {
             data.forEach((song) => {
               const option = document.createElement("option");
@@ -563,16 +563,16 @@ function handleSearch() {
             });
           }
 
-          // 添加用户输入作为一个选项
+          // 添加用戶輸入作為一個選項
           const userOption = document.createElement("option");
           userOption.value = query;
-          userOption.textContent = `使用关键词播放: ${query}`;
+          userOption.textContent = `使用關鍵字播放: ${query}`;
           musicSelect.appendChild(userOption);
 
-          // 提示没找到
+          // 提示沒找到
           if (data.length === 0) {
             const option = document.createElement("option");
-            option.textContent = "没有匹配的结果";
+            option.textContent = "沒有匹配的結果";
             option.disabled = true;
             musicSelect.appendChild(option);
           }
@@ -583,7 +583,7 @@ function handleSearch() {
     }, 600)
   );
 
-  // 动态显示保存文件名输入框
+  // 動態顯示保存文件名輸入框
   const musicNameSelect = document.getElementById("music-name");
   const musicFilenameInput = document.getElementById("music-filename");
   function updateInputVisibility() {
@@ -593,18 +593,18 @@ function handleSearch() {
     if (musicNameSelect.options.length === 0) {
       startsWithKeyword = false;
     } else {
-      startsWithKeyword = selectedOption.text.startsWith("使用关键词播放:");
+      startsWithKeyword = selectedOption.text.startsWith("使用關鍵字播放:");
     }
 
     if (startsWithKeyword) {
       musicFilenameInput.style.display = "block";
       musicFilenameInput.placeholder =
-        "请输入保存为的文件名称(默认:" + selectedOption.value + ")";
+        "請輸入保存為的文件名稱(默認:" + selectedOption.value + ")";
     } else {
       musicFilenameInput.style.display = "none";
     }
   }
-  // 观察元素修改
+  // 觀察元素修改
   const observer = new MutationObserver((mutationsList) => {
     for (const mutation of mutationsList) {
       if (mutation.type === "childList") {
@@ -613,7 +613,7 @@ function handleSearch() {
     }
   });
   observer.observe(musicNameSelect, { childList: true });
-  // 监听用户输入
+  // 監聽用戶輸入
   musicNameSelect.addEventListener("change", updateInputVisibility);
 }
 
@@ -628,30 +628,30 @@ function formatTime(seconds) {
 }
 
 $("audio").on("error", (e) => {
-  //如果audio标签的src为空，则不做任何操作，兼容安卓端的低版本webview
+  //如果audio標籤的src為空，則不做任何操作，兼容安卓端的低版本webview
   if ($("audio").attr("src") === "") {
     return;
   }
   console.log(
-    "%c网页播放出现错误: ",
+    "%c網頁播放出現錯誤: ",
     "color: #007acc;",
     e.currentTarget.error.code,
     e.currentTarget.error.message
   );
   alert(
     e.currentTarget.error.code == 4
-      ? "无法打开媒体文件，XIAOMUSIC_HOSTNAME或端口地址错误，请重新设置"
-      : "在线播放失败，请截图反馈: " + e.currentTarget.error.message
+      ? "無法打開媒體文件，XIAOMUSIC_HOSTNAME或端口地址錯誤，請重新設置"
+      : "在線播放失敗，請截圖反饋: " + e.currentTarget.error.message
   );
 });
 function validHost(url) {
-  //如果 localStorage 中有 no-warning 则直接返回true
+  //如果 localStorage 中有 no-warning 則直接返回true
   if (no_warning) {
     return true;
   }
   const local = location.host;
   const host = new URL(url).host;
-  // 如果当前页面的Host与设置中的XIAOMUSIC_HOSTNAME、PORT一致, 不再提醒
+  // 如果當前頁面的Host與設置中的XIAOMUSIC_HOSTNAME、PORT一致, 不再提醒
   if (local === host) {
     return true;
   }
@@ -659,7 +659,7 @@ function validHost(url) {
   $("#local-host").text(local);
   $("#setting-host").text(host);
   $("#warning-component").show();
-  console.log("%c 验证返回false", "color: #007acc;");
+  console.log("%c 驗證返回false", "color: #007acc;");
   return false;
 }
 
@@ -694,7 +694,7 @@ function confirmSearch() {
 
 
 let ws = null;
-// 启动 WebSocket 连接
+// 啟動 WebSocket 連接
 function connectWebSocket(did) {
   fetch(`/generate_ws_token?did=${did}`)
     .then((res) => res.json())
@@ -703,7 +703,7 @@ function connectWebSocket(did) {
       startWebSocket(did, token);
     })
     .catch((err) => {
-      console.error("获取 token 失败:", err);
+      console.error("獲取 token 失敗:", err);
       setTimeout(() => connectWebSocket(did), 5000);
     });
 }
@@ -721,7 +721,7 @@ function startWebSocket(did, token) {
     let cur_music = data.cur_music || "";
 
     $("#playering-music").text(
-      isPlaying ? `【播放中】 ${cur_music}` : `【空闲中】 ${cur_music}`
+      isPlaying ? `【播放中】 ${cur_music}` : `【空閒中】 ${cur_music}`
     );
 
     offset = data.offset || 0;
@@ -738,14 +738,14 @@ function startWebSocket(did, token) {
   };
 
   ws.onclose = () => {
-    console.log("WebSocket 已断开，正在重连...");
+    console.log("WebSocket 已斷開，正在重連...");
     setTimeout(() => startWebSocket(did, token), 3000);
   };
 
-  ws.onerror = (err) => console.error("WebSocket 错误:", err);
+  ws.onerror = (err) => console.error("WebSocket 錯誤:", err);
 }
 
-// 每秒更新播放进度
+// 每秒更新播放進度
 function updateProgressUI() {
   const progressPercent = duration > 0 ? (offset / duration) * 100 : 0;
   $("#progress").val(progressPercent);
