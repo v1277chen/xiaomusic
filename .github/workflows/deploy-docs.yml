@@ -34,7 +34,9 @@ jobs:
       - name: Build Documentation
         run: |
           cd docs
-          npm run docs:build
+          # 使用倉庫名稱作為 base path，兼容 Fork 倉庫 (例如 /xiaomusic/)
+          # 如果使用自定義域名，可以移除 --base 參數
+          npm run docs:build -- --base /${{ github.event.repository.name }}/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
